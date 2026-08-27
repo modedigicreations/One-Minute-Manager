@@ -19,6 +19,10 @@ export async function createFeedbackAction(formData: FormData) {
       return { success: false, error: 'All fields are required.' }
     }
 
+    if (type !== 'praising' && type !== 'correction') {
+      return { success: false, error: 'Invalid feedback type.' }
+    }
+
     const { error } = await supabase
       .from('feedbacks')
       .insert({

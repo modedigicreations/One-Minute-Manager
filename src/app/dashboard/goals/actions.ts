@@ -33,7 +33,10 @@ export async function createGoalAction(formData: FormData) {
     const objective = (formData.get('objective') as string)?.trim()
     const expected_result = (formData.get('expected_result') as string)?.trim()
     const deadline = formData.get('deadline') as string
-    const progress = parseInt(formData.get('progress') as string || '0', 10)
+    
+    const progressRaw = formData.get('progress') as string || '0'
+    const progressParsed = parseInt(progressRaw, 10)
+    const progress = isNaN(progressParsed) ? 0 : progressParsed
 
     if (!employee_id || !objective || !expected_result || !deadline) {
       return { success: false, error: 'All fields are required.' }

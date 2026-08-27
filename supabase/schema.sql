@@ -29,7 +29,12 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'role', 'employee'),
-    (NEW.raw_user_meta_data->>'manager_id')::uuid
+    CASE 
+      WHEN NEW.raw_user_meta_data->>'manager_id' IS NULL 
+           OR NEW.raw_user_meta_data->>'manager_id' = '' 
+           OR NEW.raw_user_meta_data->>'manager_id' = 'undefined' THEN NULL
+      ELSE (NEW.raw_user_meta_data->>'manager_id')::uuid
+    END
   );
   RETURN NEW;
 END;
