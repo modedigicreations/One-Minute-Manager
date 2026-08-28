@@ -27,6 +27,10 @@ export default async function DashboardPage() {
 
   const isManager = profile.role === 'manager'
 
+  // Standard current date string (YYYY-MM-DD) for timezone-neutral overdue comparison
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
   if (isManager) {
     // MANAGER DATA FETCHING
     
@@ -51,25 +55,30 @@ export default async function DashboardPage() {
       .order('created_at', { ascending: false })
       .limit(20)
 
-    // Calculate manager statistics
-    const stats = {
-      completed: goals?.filter(g => g.status === 'completed').length || 0,
-      inProgress: goals?.filter(g => g.status === 'in_progress' || g.status === 'not_started').length || 0,
-      behind: goals?.filter(g => g.status === 'behind').length || 0,
-      totalPraises: feedbacks?.filter(f => f.type === 'praising').length || 0,
-      totalCorrections: feedbacks?.filter(f => f.type === 'correction').length || 0,
-    }
-
-    // Format goals data to include employee names correctly
+    // Format goals with real-time overdue detection
     const formattedGoals = (goals || []).map(g => {
       const p = g.profiles as unknown as { full_name: string | null } | null
+      let effectiveStatus = g.status
+      if (effectiveStatus !== 'completed' && g.deadline < todayStr) {
+        effectiveStatus = 'behind'
+      }
       return {
         ...g,
+        status: effectiveStatus as 'not_started' | 'in_progress' | 'completed' | 'behind',
         profiles: {
           full_name: p?.full_name || 'Anonymous'
         }
       }
     })
+
+    // Calculate manager statistics using real-time effective status
+    const stats = {
+      completed: formattedGoals.filter(g => g.status === 'completed').length,
+      inProgress: formattedGoals.filter(g => g.status === 'in_progress' || g.status === 'not_started').length,
+      behind: formattedGoals.filter(g => g.status === 'behind').length,
+      totalPraises: feedbacks?.filter(f => f.type === 'praising').length || 0,
+      totalCorrections: feedbacks?.filter(f => f.type === 'correction').length || 0,
+    }
 
     const formattedFeedbacks = (feedbacks || []).map(f => {
       const p = f.profiles as unknown as { full_name: string | null; email: string } | null
@@ -104,6 +113,18 @@ export default async function DashboardPage() {
       .eq('employee_id', user.id)
       .order('created_at', { ascending: false })
 
+    // Real-time overdue detection for employee
+    const formattedGoals = (goals || []).map(g => {
+      let effectiveStatus = g.status
+      if (effectiveStatus !== 'completed' && g.deadline < todayStr) {
+        effectiveStatus = 'behind'
+      }
+      return {
+        ...g,
+        status: effectiveStatus as 'not_started' | 'in_progress' | 'completed' | 'behind',
+      }
+    })
+
     // Fetch feedbacks received by this employee
     const { data: feedbacks } = await supabase
       .from('feedbacks')
@@ -132,7 +153,7 @@ export default async function DashboardPage() {
           email: profile.email,
         }}
         managerInfo={managerInfo}
-        goals={goals || []}
+        goals={formattedGoals}
         feedbacks={feedbacks || []}
       />
     )

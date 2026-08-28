@@ -69,6 +69,105 @@ export async function createGoalAction(formData: FormData) {
   }
 }
 
+export async function editGoalAction(formData: FormData) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    const goal_id = formData.get('goal_id') as string
+    const objective = (formData.get('objective') as string)?.trim()
+    const expected_result = (formData.get('expected_result') as string)?.trim()
+    const deadline = formData.get('deadline') as string
+    const progressRaw = formData.get('progress') as string || '0'
+    const progress = parseInt(progressRaw, 10) || 0
+
+    if (!goal_id || !objective || !expected_result || !deadline) {
+      return { success: false, error: 'All fields are required.' }
+    }
+
+    const status = determineStatus(progress, deadline)
+
+    const { error } = await supabase
+      .from('goals')
+      .update({
+        objective,
+        expected_result,
+        deadline,
+        progress,
+        status,
+      })
+      .eq('id', goal_id)
+      .eq('manager_id', user.id)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (err) {
+    console.error('Edit goal action error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update goal.' }
+  }
+}
+
+export async function completeGoalAction(goalId: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    const { error } = await supabase
+      .from('goals')
+      .update({
+        progress: 100,
+        status: 'completed',
+      })
+      .eq('id', goalId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (err) {
+    console.error('Complete goal action error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to complete goal.' }
+  }
+}
+
+export async function deleteGoalAction(goalId: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    const { error } = await supabase
+      .from('goals')
+      .delete()
+      .eq('id', goalId)
+      .eq('manager_id', user.id)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (err) {
+    console.error('Delete goal action error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to delete goal.' }
+  }
+}
+
 export async function updateGoalProgressAction(goalId: string, progress: number, deadlineStr: string) {
   try {
     const supabase = await createClient()

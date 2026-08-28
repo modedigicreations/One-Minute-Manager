@@ -18,6 +18,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Signup-specific state
   const [role, setRole] = useState<'manager' | 'employee'>('employee')
@@ -45,6 +46,7 @@ export default function LoginForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    setSuccessMessage(null)
     setLoading(true)
 
     const form = new FormData(e.currentTarget)
@@ -57,7 +59,7 @@ export default function LoginForm() {
           return
         }
         if (res.requiresConfirmation) {
-          setError('Account created! Please check your email to confirm your account, then sign in.')
+          setSuccessMessage('Account created! Please check your email to confirm your account, then sign in.')
           return
         }
       } else {
@@ -97,8 +99,14 @@ export default function LoginForm() {
       </div>
 
       {(error || urlError) && (
-        <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3 font-medium">
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm rounded-xl px-4 py-3 font-medium">
           {error || urlError}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm rounded-xl px-4 py-3 font-medium">
+          {successMessage}
         </div>
       )}
 

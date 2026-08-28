@@ -35,6 +35,22 @@ export default async function TeamPage() {
     .select('id, objective, expected_result, deadline, progress, status, employee_id')
     .eq('manager_id', user.id)
 
+  // Standard current date string (YYYY-MM-DD) for timezone-neutral overdue comparison
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+  // Format goals with real-time overdue detection
+  const formattedGoals = (goals || []).map(g => {
+    let effectiveStatus = g.status
+    if (effectiveStatus !== 'completed' && g.deadline < todayStr) {
+      effectiveStatus = 'behind'
+    }
+    return {
+      ...g,
+      status: effectiveStatus as 'not_started' | 'in_progress' | 'completed' | 'behind',
+    }
+  })
+
   // Fetch feedbacks
   const { data: feedbacks } = await supabase
     .from('feedbacks')
@@ -49,7 +65,7 @@ export default async function TeamPage() {
         email: profile.email,
       }}
       employees={employees || []}
-      goals={goals || []}
+      goals={formattedGoals}
       feedbacks={feedbacks || []}
     />
   )

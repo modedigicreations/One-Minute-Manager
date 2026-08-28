@@ -22,10 +22,18 @@ import {
   Zap,
   UserCheck,
   Send,
-  X
+  X,
+  Edit2,
+  Trash2,
+  CheckCircle
 } from 'lucide-react'
-import { createGoalAction } from '@/app/dashboard/goals/actions'
-import { createFeedbackAction } from '@/app/dashboard/feedback/actions'
+import { 
+  createGoalAction, 
+  editGoalAction, 
+  deleteGoalAction, 
+  completeGoalAction 
+} from '@/app/dashboard/goals/actions'
+import { createFeedbackAction, deleteFeedbackAction } from '@/app/dashboard/feedback/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
 
 interface Employee {
@@ -85,6 +93,8 @@ export default function ManagerDashboard({
 }: ManagerDashboardProps) {
   // Modal states
   const [goalModalOpen, setGoalModalOpen] = useState(false)
+  const [editGoalModalOpen, setEditGoalModalOpen] = useState(false)
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   
@@ -102,7 +112,9 @@ export default function ManagerDashboard({
 
   // Loading states
   const [submittingGoal, setSubmittingGoal] = useState(false)
+  const [submittingEditGoal, setSubmittingEditGoal] = useState(false)
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Extract manager first name
@@ -147,6 +159,63 @@ export default function ManagerDashboard({
     } else {
       setError(res.error || 'Failed to create goal')
       setSubmittingGoal(false)
+    }
+  }
+
+  async function handleEditGoal(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSubmittingEditGoal(true)
+    setError(null)
+
+    const form = new FormData(e.currentTarget)
+    const res = await editGoalAction(form)
+
+    if (res.success) {
+      setEditGoalModalOpen(false)
+      setEditingGoal(null)
+      window.location.reload()
+    } else {
+      setError(res.error || 'Failed to update goal')
+      setSubmittingEditGoal(false)
+    }
+  }
+
+  async function handleDeleteGoal(goalId: string) {
+    if (!confirm('Are you sure you want to delete this goal? This action cannot be undone.')) {
+      return
+    }
+
+    setActionInProgress(goalId)
+    const res = await deleteGoalAction(goalId)
+    if (res.success) {
+      window.location.reload()
+    } else {
+      alert(res.error || 'Failed to delete goal')
+      setActionInProgress(null)
+    }
+  }
+
+  async function handleCompleteGoal(goalId: string) {
+    setActionInProgress(goalId)
+    const res = await completeGoalAction(goalId)
+    if (res.success) {
+      window.location.reload()
+    } else {
+      alert(res.error || 'Failed to mark goal complete')
+      setActionInProgress(null)
+    }
+  }
+
+  async function handleDeleteFeedback(feedbackId: string) {
+    if (!confirm('Are you sure you want to retract this feedback?')) {
+      return
+    }
+
+    const res = await deleteFeedbackAction(feedbackId)
+    if (res.success) {
+      window.location.reload()
+    } else {
+      alert(res.error || 'Failed to delete feedback')
     }
   }
 
@@ -207,7 +276,7 @@ export default function ManagerDashboard({
           </p>
         </div>
 
-        {/* Action Buttons (Mobile Grid, Desktop Row) */}
+        {/* Action Buttons */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto pt-1 md:pt-0">
           <Button 
             variant="secondary"
@@ -242,7 +311,7 @@ export default function ManagerDashboard({
       </div>
 
       {/* ============================================================ */}
-      {/* 2. EXECUTIVE METRICS ROW (2x2 on Mobile, 4-col on Desktop) */}
+      {/* 2. EXECUTIVE METRICS ROW */}
       {/* ============================================================ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         {/* Card 1: Goals Completed */}
@@ -535,7 +604,7 @@ export default function ManagerDashboard({
               </Button>
             </CardHeader>
 
-            {/* Filter & Search Bar with horizontal touch scroll */}
+            {/* Filter & Search Bar */}
             {goals.length > 0 && (
               <div className="px-4 sm:px-6 py-2.5 bg-slate-50/80 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 {/* Search */}
@@ -558,7 +627,7 @@ export default function ManagerDashboard({
                   )}
                 </div>
 
-                {/* Filter Tabs (Horizontal Scroll on Mobile) */}
+                {/* Filter Tabs */}
                 <div className="flex items-center gap-1 text-xs overflow-x-auto no-scrollbar pb-1 sm:pb-0">
                   <button
                     onClick={() => setGoalFilter('all')}
@@ -608,7 +677,6 @@ export default function ManagerDashboard({
 
             <CardContent className="p-0 divide-y divide-slate-100">
               {goals.length === 0 ? (
-                /* One-Minute Goal Blueprint Empty State */
                 <div className="p-6 sm:p-8 text-center space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
                     <Sparkles size={22} />
@@ -652,7 +720,7 @@ export default function ManagerDashboard({
                 </div>
               ) : (
                 filteredGoals.map((goal) => (
-                  <div key={goal.id} className="p-4 sm:p-5 space-y-2.5 hover:bg-slate-50/50 transition">
+                  <div key={goal.id} className="p-4 sm:p-5 space-y-3 hover:bg-slate-50/50 transition">
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-0.5 min-w-0 flex-1">
                         <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">{goal.objective}</h4>
@@ -667,10 +735,11 @@ export default function ManagerDashboard({
                       <strong className="text-slate-700">Expected Result:</strong> {goal.expected_result}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-semibold text-slate-400 pt-1">
+                    {/* Progress bar + Actions */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs font-semibold text-slate-400 pt-1">
                       <span className="text-slate-500 text-[11px]">Deadline: {formatStaticDate(goal.deadline)}</span>
                       
-                      <div className="flex items-center gap-2.5 w-full sm:w-1/2">
+                      <div className="flex items-center gap-2.5 w-full sm:w-2/5">
                         <span className="text-xs font-bold text-slate-700 shrink-0 w-8">{goal.progress}%</span>
                         <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
                           <div 
@@ -684,6 +753,41 @@ export default function ManagerDashboard({
                             style={{ width: `${goal.progress}%` }}
                           />
                         </div>
+                      </div>
+
+                      {/* Goal Management Actions */}
+                      <div className="flex items-center gap-1.5 self-end sm:self-auto pt-1 sm:pt-0">
+                        {goal.status !== 'completed' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCompleteGoal(goal.id)}
+                            disabled={actionInProgress === goal.id}
+                            className="text-emerald-700 hover:text-emerald-900 p-1.5 rounded-lg hover:bg-emerald-50 transition cursor-pointer"
+                            title="Mark Completed"
+                          >
+                            <CheckCircle size={15} />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingGoal(goal)
+                            setEditGoalModalOpen(true)
+                          }}
+                          className="text-slate-500 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                          title="Edit Goal"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGoal(goal.id)}
+                          disabled={actionInProgress === goal.id}
+                          className="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                          title="Delete Goal"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -798,7 +902,7 @@ export default function ManagerDashboard({
                 </div>
               ) : (
                 feedbacks.map((fb) => (
-                  <div key={fb.id} className="flex gap-2.5 text-left">
+                  <div key={fb.id} className="flex gap-2.5 text-left group">
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 shadow-xs ${
                       fb.type === 'praising' 
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80' 
@@ -807,17 +911,28 @@ export default function ManagerDashboard({
                       {fb.type === 'praising' ? <Award size={14} /> : <Compass size={14} />}
                     </div>
                     <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-xs text-slate-900 truncate">
-                          {fb.profiles.full_name}
-                        </span>
-                        <span className={`inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-bold border tracking-wide uppercase ${
-                          fb.type === 'praising' 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                            : 'bg-rose-50 text-rose-700 border-rose-200'
-                        }`}>
-                          {fb.type === 'praising' ? 'Praise' : 'Adjustment'}
-                        </span>
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-xs text-slate-900 truncate">
+                            {fb.profiles.full_name}
+                          </span>
+                          <span className={`inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-bold border tracking-wide uppercase ${
+                            fb.type === 'praising' 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}>
+                            {fb.type === 'praising' ? 'Praise' : 'Adjustment'}
+                          </span>
+                        </div>
+                        {/* Delete feedback button */}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFeedback(fb.id)}
+                          className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-600 p-0.5 rounded transition cursor-pointer"
+                          title="Delete Feedback"
+                        >
+                          <Trash2 size={12} />
+                        </button>
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed italic bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                         &ldquo;{fb.message}&rdquo;
@@ -835,12 +950,11 @@ export default function ManagerDashboard({
       </div>
 
       {/* ============================================================ */}
-      {/* MODAL 1: CREATE GOAL (Mobile Bottom-Sheet, Desktop Modal) */}
+      {/* MODAL 1: CREATE GOAL (Bottom-Sheet) */}
       {/* ============================================================ */}
       {goalModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
-            {/* Mobile Sheet Handle */}
             <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
 
             <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
@@ -868,7 +982,6 @@ export default function ManagerDashboard({
                 </div>
               )}
 
-              {/* Employee Selection */}
               <div>
                 <label htmlFor="employee_id" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Assign to Employee
@@ -906,7 +1019,6 @@ export default function ManagerDashboard({
                 )}
               </div>
 
-              {/* Objective */}
               <div>
                 <label htmlFor="objective" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Goal Objective (Concise & Specific)
@@ -921,7 +1033,6 @@ export default function ManagerDashboard({
                 />
               </div>
 
-              {/* Expected Result */}
               <div>
                 <label htmlFor="expected_result" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Expected Result / Standards
@@ -936,7 +1047,6 @@ export default function ManagerDashboard({
                 />
               </div>
 
-              {/* Target Deadline */}
               <div>
                 <label htmlFor="deadline" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Target Deadline
@@ -969,12 +1079,132 @@ export default function ManagerDashboard({
       )}
 
       {/* ============================================================ */}
-      {/* MODAL 2: LOG PRAISING / CORRECTION (Bottom-Sheet) */}
+      {/* MODAL 2: EDIT GOAL (Bottom-Sheet) */}
+      {/* ============================================================ */}
+      {editGoalModalOpen && editingGoal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
+            <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
+
+            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold">
+                  <Edit2 size={15} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base">Edit Performance Goal</h3>
+                  <p className="text-[10px] sm:text-[11px] text-slate-400 font-normal">Adjust expectations or deadlines.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setEditGoalModalOpen(false)
+                  setEditingGoal(null)
+                }} 
+                className="text-slate-400 hover:text-white transition cursor-pointer p-1"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditGoal} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+              <input type="hidden" name="goal_id" value={editingGoal.id} />
+
+              {error && (
+                <div className="bg-rose-50 text-rose-700 p-3 rounded-xl text-xs font-bold border border-rose-200">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="edit_objective" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Goal Objective
+                </label>
+                <input
+                  id="edit_objective"
+                  name="objective"
+                  type="text"
+                  required
+                  defaultValue={editingGoal.objective}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit_expected_result" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Expected Result / Standards
+                </label>
+                <textarea
+                  id="edit_expected_result"
+                  name="expected_result"
+                  required
+                  rows={3}
+                  defaultValue={editingGoal.expected_result}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit_deadline" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Deadline
+                  </label>
+                  <input
+                    id="edit_deadline"
+                    name="deadline"
+                    type="date"
+                    required
+                    defaultValue={editingGoal.deadline}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit_progress" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Progress (%)
+                  </label>
+                  <input
+                    id="edit_progress"
+                    name="progress"
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    defaultValue={editingGoal.progress}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 pb-safe">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => {
+                    setEditGoalModalOpen(false)
+                    setEditingGoal(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  loading={submittingEditGoal}
+                  className="bg-slate-900 hover:bg-slate-800 text-white"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 3: LOG PRAISING / CORRECTION (Bottom-Sheet) */}
       {/* ============================================================ */}
       {feedbackModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
-            {/* Mobile Handle */}
             <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
 
             <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
@@ -1004,7 +1234,6 @@ export default function ManagerDashboard({
                 </div>
               )}
 
-              {/* Feedback Type Toggle */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Feedback Type
@@ -1037,7 +1266,6 @@ export default function ManagerDashboard({
                 </div>
               </div>
 
-              {/* Team Member */}
               <div>
                 <label htmlFor="employee_id_fb" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Team Member
@@ -1063,7 +1291,6 @@ export default function ManagerDashboard({
                 )}
               </div>
 
-              {/* Optional Goal binding */}
               <div>
                 <label htmlFor="goal_id" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Associated Goal (Optional)
@@ -1082,7 +1309,6 @@ export default function ManagerDashboard({
                 </select>
               </div>
 
-              {/* Message */}
               <div>
                 <label htmlFor="message" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   {feedbackType === 'praising' 
@@ -1124,12 +1350,11 @@ export default function ManagerDashboard({
       )}
 
       {/* ============================================================ */}
-      {/* MODAL 3: INVITE TEAM MEMBERS INSTRUCTIONS (Bottom-Sheet) */}
+      {/* MODAL 4: INVITE TEAM MEMBERS INSTRUCTIONS (Bottom-Sheet) */}
       {/* ============================================================ */}
       {inviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
-            {/* Mobile Handle */}
             <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
 
             <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">

@@ -11,9 +11,10 @@ import {
   BookOpen, 
   CheckCircle2, 
   Clock, 
-  Sparkles
+  Sparkles,
+  CheckCircle
 } from 'lucide-react'
-import { updateGoalProgressAction } from '@/app/dashboard/goals/actions'
+import { updateGoalProgressAction, completeGoalAction } from '@/app/dashboard/goals/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
 
 interface Goal {
@@ -239,7 +240,7 @@ export default function EmployeeDashboard({
                           onChange={(e) => setSliderVals({ ...sliderVals, [goal.id]: parseInt(e.target.value, 10) })}
                           className="w-full accent-emerald-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                         />
-                        {(sliderVals[goal.id] ?? goal.progress) !== goal.progress && (
+                        {(sliderVals[goal.id] ?? goal.progress) !== goal.progress ? (
                           <Button
                             size="sm"
                             loading={updatingGoalId === goal.id}
@@ -248,6 +249,25 @@ export default function EmployeeDashboard({
                           >
                             Save
                           </Button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setUpdatingGoalId(goal.id)
+                              const res = await completeGoalAction(goal.id)
+                              if (res.success) window.location.reload()
+                              else {
+                                alert(res.error || 'Failed to complete goal')
+                                setUpdatingGoalId(null)
+                              }
+                            }}
+                            disabled={updatingGoalId === goal.id}
+                            className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg hover:bg-emerald-50 transition border border-emerald-200/60 cursor-pointer"
+                            title="Mark as 100% Completed"
+                          >
+                            <CheckCircle size={13} />
+                            <span>Done</span>
+                          </button>
                         )}
                       </div>
                     </div>

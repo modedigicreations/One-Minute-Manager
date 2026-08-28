@@ -45,3 +45,29 @@ export async function createFeedbackAction(formData: FormData) {
     return { success: false, error: err instanceof Error ? err.message : 'Failed to save feedback.' }
   }
 }
+
+export async function deleteFeedbackAction(feedbackId: string) {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    const { error } = await supabase
+      .from('feedbacks')
+      .delete()
+      .eq('id', feedbackId)
+      .eq('manager_id', user.id)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (err) {
+    console.error('Delete feedback action error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to delete feedback.' }
+  }
+}
