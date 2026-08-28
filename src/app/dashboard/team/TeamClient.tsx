@@ -1,16 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Badge, GoalStatusBadge } from '@/components/ui/Badge'
+import { GoalStatusBadge } from '@/components/ui/Badge'
 import { 
   Award, 
   Compass, 
   ArrowLeft, 
   TrendingUp, 
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Check,
+  Search,
+  Users,
+  ArrowRight,
+  X,
+  Send
 } from 'lucide-react'
 import { createFeedbackAction } from '@/app/dashboard/feedback/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
@@ -41,12 +48,16 @@ interface Feedback {
 }
 
 interface TeamClientProps {
+  managerProfile?: {
+    full_name: string | null
+    email: string
+  }
   employees: Employee[]
   goals: Goal[]
   feedbacks: Feedback[]
 }
 
-export default function TeamClient({ employees, goals, feedbacks }: TeamClientProps) {
+export default function TeamClient({ managerProfile, employees, goals, feedbacks }: TeamClientProps) {
   const [selectedEmpId, setSelectedEmpId] = useState<string | null>(null)
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
   const [feedbackType, setFeedbackType] = useState<'praising' | 'correction'>('praising')
@@ -54,9 +65,22 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Search filter
+  const [search, setSearch] = useState('')
+  const [copiedEmail, setCopiedEmail] = useState(false)
+
   const selectedEmp = employees.find(e => e.id === selectedEmpId)
   const selectedGoals = goals.filter(g => g.employee_id === selectedEmpId)
   const selectedFeedbacks = feedbacks.filter(f => f.employee_id === selectedEmpId)
+
+  const filteredEmployees = useMemo(() => {
+    if (!search.trim()) return employees
+    const q = search.toLowerCase()
+    return employees.filter(e => 
+      (e.full_name || '').toLowerCase().includes(q) || 
+      e.email.toLowerCase().includes(q)
+    )
+  }, [employees, search])
 
   async function handleCreateFeedback(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -82,31 +106,40 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
     }
   }
 
+  function handleCopyEmail() {
+    if (!managerProfile?.email) return
+    navigator.clipboard.writeText(managerProfile.email)
+    setCopiedEmail(true)
+    setTimeout(() => setCopiedEmail(false), 2000)
+  }
+
   // If a team member is selected, show their specific drill-down details
   if (selectedEmp) {
     const behindGoalsCount = selectedGoals.filter(g => g.status === 'behind').length
+    const completedGoalsCount = selectedGoals.filter(g => g.status === 'completed').length
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-12">
         {/* Header navigation */}
         <button 
           onClick={() => setSelectedEmpId(null)}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 uppercase tracking-wider transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 uppercase tracking-wider transition cursor-pointer"
         >
           <ArrowLeft size={14} />
-          Back to Team List
+          <span>Back to Team Roster</span>
         </button>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Profile Card */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 bg-white rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-500 text-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-700 text-white flex items-center justify-center font-extrabold text-2xl shadow-sm">
               {selectedEmp.full_name ? selectedEmp.full_name[0].toUpperCase() : 'E'}
             </div>
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {selectedEmp.full_name || 'Team Member'}
               </h1>
-              <p className="text-slate-500 text-sm">{selectedEmp.email}</p>
+              <p className="text-slate-500 text-xs sm:text-sm font-medium">{selectedEmp.email}</p>
             </div>
           </div>
 
@@ -117,10 +150,10 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
                 setFeedbackType('praising')
                 setFeedbackModalOpen(true)
               }}
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 text-xs"
             >
-              <Award size={16} />
-              Log Praise
+              <Award size={15} />
+              <span>Log Praise</span>
             </Button>
             <Button
               variant="danger"
@@ -128,11 +161,29 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
                 setFeedbackType('correction')
                 setFeedbackModalOpen(true)
               }}
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 text-xs"
             >
-              <Compass size={16} />
-              Log Correction
+              <Compass size={15} />
+              <span>Log Re-Direct</span>
             </Button>
+          </div>
+        </div>
+
+        {/* Quick Stats for this member */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="p-4 bg-white rounded-xl border border-slate-200/80 text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Goals</span>
+            <span className="text-xl font-extrabold text-slate-900">{selectedGoals.length}</span>
+          </div>
+          <div className="p-4 bg-white rounded-xl border border-slate-200/80 text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Completed</span>
+            <span className="text-xl font-extrabold text-emerald-600">{completedGoalsCount}</span>
+          </div>
+          <div className="p-4 bg-white rounded-xl border border-slate-200/80 text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Re-Directs Needed</span>
+            <span className={`text-xl font-extrabold ${behindGoalsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+              {behindGoalsCount}
+            </span>
           </div>
         </div>
 
@@ -144,38 +195,35 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
               <CardHeader>
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingUp size={18} className="text-slate-400" />
-                    Performance Goals
+                    <TrendingUp size={18} className="text-slate-500" />
+                    <span>Performance Goals</span>
                   </CardTitle>
                   <CardDescription>Expectations and current completion progress.</CardDescription>
                 </div>
-                {behindGoalsCount > 0 && (
-                  <Badge variant="danger">{behindGoalsCount} Behind</Badge>
-                )}
               </CardHeader>
               <CardContent className="divide-y divide-slate-100 p-0">
                 {selectedGoals.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400 text-sm">
-                    No goals assigned to this employee. Set a new performance goal from the Dashboard.
+                  <div className="p-8 text-center text-slate-400 text-xs">
+                    No goals assigned to this team member yet. Set one from the main dashboard!
                   </div>
                 ) : (
                   selectedGoals.map((goal) => (
                     <div key={goal.id} className="p-5 space-y-3">
                       <div className="flex items-start justify-between gap-4">
-                        <h4 className="font-bold text-slate-800">{goal.objective}</h4>
+                        <h4 className="font-bold text-slate-900 text-sm">{goal.objective}</h4>
                         <GoalStatusBadge status={goal.status} />
                       </div>
 
-                      <div className="text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl p-3">
-                        <strong>Expected Result:</strong> {goal.expected_result}
+                      <div className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <strong className="text-slate-700">Expected Result:</strong> {goal.expected_result}
                       </div>
 
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs font-semibold text-slate-400">
-                        <span>Deadline: {formatStaticDate(goal.deadline)}</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs font-semibold text-slate-400">
+                        <span className="text-slate-500">Deadline: {formatStaticDate(goal.deadline)}</span>
                         
                         <div className="flex items-center gap-2 w-full sm:w-1/2">
-                          <span>{goal.progress}%</span>
-                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <span className="text-xs font-bold text-slate-700">{goal.progress}%</span>
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
                             <div 
                               className={`h-full rounded-full transition-all ${
                                 goal.status === 'completed' 
@@ -196,46 +244,46 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
             </Card>
           </div>
 
-          {/* Feedback loop timeline history */}
-          <div>
+          {/* Feedback History (Span 1) */}
+          <div className="space-y-6">
             <Card>
               <CardHeader>
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <MessageSquare size={18} className="text-slate-400" />
-                    Feedback History
+                    <MessageSquare size={17} className="text-slate-500" />
+                    <span>Feedback History</span>
                   </CardTitle>
                   <CardDescription>Praisings and corrections logged for this member.</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-4 p-5">
                 {selectedFeedbacks.length === 0 ? (
-                  <div className="text-center text-slate-400 text-sm py-4">
-                    No feedback history.
+                  <div className="text-center text-slate-400 text-xs py-6">
+                    No feedback recorded yet. Use the buttons above to log immediate praise!
                   </div>
                 ) : (
                   selectedFeedbacks.map((fb) => (
                     <div key={fb.id} className="flex gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 ${
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 ${
                         fb.type === 'praising' 
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                          : 'bg-rose-50 text-rose-600 border-rose-100'
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                          : 'bg-rose-50 text-rose-600 border-rose-200'
                       }`}>
-                        {fb.type === 'praising' ? <Award size={16} /> : <Compass size={16} />}
+                        {fb.type === 'praising' ? <Award size={15} /> : <Compass size={15} />}
                       </div>
-                      <div className="space-y-1">
-                        <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold border tracking-wide uppercase ${
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <span className={`inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-bold border tracking-wide uppercase ${
                           fb.type === 'praising' 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                            : 'bg-rose-50 text-rose-700 border-rose-100'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
                         }`}>
-                          {fb.type === 'praising' ? 'Praise' : 'Correction'}
+                          {fb.type === 'praising' ? 'Praise' : 'Adjustment'}
                         </span>
-                        <p className="text-xs text-slate-500 leading-relaxed italic">
+                        <p className="text-xs text-slate-600 leading-relaxed italic bg-slate-50 p-2 rounded-lg border border-slate-100">
                           &ldquo;{fb.message}&rdquo;
                         </p>
                         <span className="text-[10px] text-slate-400 font-medium block">
-                          <ClientFeedbackTime isoString={fb.created_at} dateOnly={true} />
+                          <ClientFeedbackTime isoString={fb.created_at} />
                         </span>
                       </div>
                     </div>
@@ -248,42 +296,59 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
 
         {/* FEEDBACK MODAL */}
         {feedbackModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
-                <h3 className="font-bold text-lg">Log One-Minute Feedback</h3>
-                <button onClick={() => setFeedbackModalOpen(false)} className="text-slate-400 hover:text-white font-bold cursor-pointer">✕</button>
+                <div className="flex items-center gap-2">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold ${
+                    feedbackType === 'praising' ? 'bg-emerald-500 text-slate-950' : 'bg-rose-500 text-white'
+                  }`}>
+                    {feedbackType === 'praising' ? <Award size={15} /> : <Compass size={15} />}
+                  </div>
+                  <h3 className="font-bold text-base">Deliver One-Minute Feedback</h3>
+                </div>
+                <button onClick={() => setFeedbackModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer p-1">
+                  <X size={18} />
+                </button>
               </div>
-              <form onSubmit={handleCreateFeedback} className="p-5 space-y-4">
-                {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold border border-red-100">{error}</div>}
+              <form onSubmit={handleCreateFeedback} className="p-6 space-y-4">
+                {error && <div className="bg-rose-50 text-rose-700 p-3 rounded-xl text-xs font-bold border border-rose-200">{error}</div>}
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Feedback Type
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setFeedbackType('praising')}
-                      className={`flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-semibold transition ${feedbackType === 'praising' ? 'border-emerald-500 bg-emerald-50/35 text-emerald-600' : 'border-slate-200 bg-white text-slate-500'}`}
+                      className={`flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-semibold transition ${
+                        feedbackType === 'praising' 
+                          ? 'border-emerald-500 bg-emerald-50/70 text-emerald-700 ring-2 ring-emerald-500/20' 
+                          : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                      }`}
                     >
-                      <Award size={14} />
+                      <Award size={15} />
                       Praising
                     </button>
                     <button
                       type="button"
                       onClick={() => setFeedbackType('correction')}
-                      className={`flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-semibold transition ${feedbackType === 'correction' ? 'border-rose-500 bg-rose-50/35 text-rose-600' : 'border-slate-200 bg-white text-slate-500'}`}
+                      className={`flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-semibold transition ${
+                        feedbackType === 'correction' 
+                          ? 'border-rose-500 bg-rose-50/70 text-rose-700 ring-2 ring-rose-500/20' 
+                          : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                      }`}
                     >
-                      <Compass size={14} />
-                      Correction
+                      <Compass size={15} />
+                      Re-Direct
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    {feedbackType === 'praising' ? 'Praise Message (Be Immediate & Specific)' : 'Correction Message (Address the Behavior, support the Person)'}
+                  <label htmlFor="message" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    {feedbackType === 'praising' ? 'Praise Message (Be immediate & specific)' : 'Re-Direct Message (Address behavior, reaffirm person)'}
                   </label>
                   <textarea
                     id="message"
@@ -294,17 +359,23 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
                     onChange={(e) => setFeedbackMessage(e.target.value)}
                     placeholder={
                       feedbackType === 'praising'
-                        ? 'e.g. John, excellent work exceeding support targets today. Love the customer care!'
-                        : 'e.g. John, response times rose today. Let\'s align on what\'s blocking us so we can fix it early. You\'ve got this.'
+                        ? `e.g. ${selectedEmp.full_name}, great work delivering on your target today!`
+                        : `e.g. ${selectedEmp.full_name}, let's review what happened with the deadline and get aligned.`
                     }
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-omm-primary bg-white"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                   <Button type="button" variant="ghost" onClick={() => setFeedbackModalOpen(false)}>Cancel</Button>
-                  <Button type="submit" variant={feedbackType === 'praising' ? 'success' : 'danger'} loading={submittingFeedback}>
-                    Submit {feedbackType === 'praising' ? 'Praise' : 'Correction'}
+                  <Button 
+                    type="submit" 
+                    variant={feedbackType === 'praising' ? 'success' : 'danger'} 
+                    loading={submittingFeedback}
+                    className="flex items-center gap-1.5"
+                  >
+                    <Send size={14} />
+                    <span>Deliver {feedbackType === 'praising' ? 'Praise' : 'Adjustment'}</span>
                   </Button>
                 </div>
               </form>
@@ -317,62 +388,124 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
 
   // Otherwise, render list of team members
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">My Team</h1>
-        <p className="text-slate-500 text-sm">Detailed overview of active team goals and feedback loops.</p>
+    <div className="space-y-6 pb-12">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">My Team</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Overview of team members, active goals, and praise tracking.</p>
+        </div>
+
+        {employees.length > 0 && (
+          <div className="relative w-full sm:w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search team member..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+            />
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {employees.map((emp) => {
-          const empGoals = goals.filter(g => g.employee_id === emp.id)
-          const behindCount = empGoals.filter(g => g.status === 'behind').length
-          const completedCount = empGoals.filter(g => g.status === 'completed').length
+      {/* When 0 employees exist: Onboarding Empty State */}
+      {employees.length === 0 ? (
+        <Card className="p-8 text-center max-w-xl mx-auto space-y-5">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
+            <Users size={26} />
+          </div>
 
-          return (
-            <Card 
-              key={emp.id} 
-              className="hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between"
-              onClick={() => setSelectedEmpId(emp.id)}
-            >
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-500 text-lg">
-                    {emp.full_name ? emp.full_name[0].toUpperCase() : 'E'}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800">{emp.full_name || 'Anonymous Employee'}</h3>
-                    <p className="text-xs text-slate-400 truncate">{emp.email}</p>
-                  </div>
-                </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-slate-900 text-lg">No Team Members Linked Yet</h3>
+            <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+              Employees link to your workspace when registering. Share your manager email address so they can select you during account creation.
+            </p>
+          </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2 text-center">
-                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Goals</span>
-                    <span className="text-lg font-extrabold text-slate-700">{empGoals.length}</span>
-                  </div>
-                  <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Completed</span>
-                    <span className="text-lg font-extrabold text-emerald-600">{completedCount}</span>
-                  </div>
-                </div>
-
-                {behindCount > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 border border-rose-100/50 p-2.5 rounded-xl font-bold">
-                    <AlertCircle size={14} />
-                    {behindCount} goal(s) falling behind!
-                  </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 max-w-md mx-auto space-y-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-left">
+              Share With Your Team:
+            </span>
+            <div className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-lg">
+              <span className="text-xs font-mono font-bold text-slate-800 truncate">
+                {managerProfile?.email || 'Your Registered Email'}
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyEmail}
+                className="text-slate-600 hover:text-slate-900 transition flex items-center gap-1 text-xs font-semibold shrink-0 cursor-pointer ml-2"
+              >
+                {copiedEmail ? (
+                  <>
+                    <Check size={14} className="text-emerald-600" />
+                    <span className="text-emerald-600">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} />
+                    <span>Copy</span>
+                  </>
                 )}
-              </CardContent>
-              <CardHeader className="bg-slate-50 border-t border-slate-100 py-3 rounded-b-2xl">
-                <span className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition">
-                  View Profile & Feedback
-                </span>
-              </CardHeader>
-            </Card>
-          )
-        })}
-      </div>
+              </button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEmployees.map((emp) => {
+            const empGoals = goals.filter(g => g.employee_id === emp.id)
+            const behindCount = empGoals.filter(g => g.status === 'behind').length
+            const completedCount = empGoals.filter(g => g.status === 'completed').length
+
+            return (
+              <Card 
+                key={emp.id} 
+                hover
+                className="cursor-pointer flex flex-col justify-between"
+                onClick={() => setSelectedEmpId(emp.id)}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center font-extrabold text-slate-700 text-lg shadow-xs">
+                      {emp.full_name ? emp.full_name[0].toUpperCase() : 'E'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-slate-900 text-sm truncate">{emp.full_name || 'Anonymous Employee'}</h3>
+                      <p className="text-xs text-slate-400 truncate">{emp.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1 text-center">
+                    <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Goals</span>
+                      <span className="text-lg font-extrabold text-slate-800">{empGoals.length}</span>
+                    </div>
+                    <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Completed</span>
+                      <span className="text-lg font-extrabold text-emerald-600">{completedCount}</span>
+                    </div>
+                  </div>
+
+                  {behindCount > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-rose-700 bg-rose-50 border border-rose-200/80 p-2.5 rounded-xl font-bold">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>{behindCount} goal(s) falling behind!</span>
+                    </div>
+                  )}
+                </CardContent>
+                <CardHeader className="bg-slate-50/70 border-t border-slate-100 py-3 rounded-b-2xl">
+                  <span className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition">
+                    <span>View Profile & Performance</span>
+                    <ArrowRight size={13} />
+                  </span>
+                </CardHeader>
+              </Card>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

@@ -136,6 +136,25 @@ CREATE POLICY "feedbacks_insert_manager" ON public.feedbacks
     )
   );
 
+-- 4. Delete Policies
+CREATE POLICY "goals_delete_manager" ON public.goals
+  FOR DELETE USING (
+    auth.uid() = manager_id AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'manager'
+    )
+  );
+
+CREATE POLICY "feedbacks_delete_manager" ON public.feedbacks
+  FOR DELETE USING (
+    auth.uid() = manager_id AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'manager'
+    )
+  );
+
 -- ============================================================
 -- INDEXES
 -- ============================================================

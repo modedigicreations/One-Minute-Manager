@@ -37,7 +37,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#f8fafc] bg-radial-subtle text-slate-900">
       {/* Sidebar navigation */}
       <Sidebar profile={{
         full_name: profile.full_name,
@@ -46,7 +46,7 @@ export default async function DashboardLayout({
       }} />
 
       {/* Main content viewport */}
-      <main className="flex-1 p-5 sm:p-8 lg:p-10 overflow-y-auto">
+      <main className="flex-1 p-6 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto">
         {children}
       </main>
     </div>

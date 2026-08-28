@@ -15,7 +15,7 @@ export default async function TeamPage() {
   // Get user profile
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('full_name, email, role')
     .eq('id', user.id)
     .single()
 
@@ -44,6 +44,10 @@ export default async function TeamPage() {
 
   return (
     <TeamClient
+      managerProfile={{
+        full_name: profile.full_name,
+        email: profile.email,
+      }}
       employees={employees || []}
       goals={goals || []}
       feedbacks={feedbacks || []}

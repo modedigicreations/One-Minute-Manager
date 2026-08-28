@@ -49,39 +49,45 @@ export default async function DashboardPage() {
       .select('id, type, message, created_at, profiles!feedbacks_employee_id_fkey(full_name, email)')
       .eq('manager_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(15)
+      .limit(20)
 
     // Calculate manager statistics
     const stats = {
       completed: goals?.filter(g => g.status === 'completed').length || 0,
       inProgress: goals?.filter(g => g.status === 'in_progress' || g.status === 'not_started').length || 0,
       behind: goals?.filter(g => g.status === 'behind').length || 0,
+      totalPraises: feedbacks?.filter(f => f.type === 'praising').length || 0,
+      totalCorrections: feedbacks?.filter(f => f.type === 'correction').length || 0,
     }
 
     // Format goals data to include employee names correctly
     const formattedGoals = (goals || []).map(g => {
-      const profile = g.profiles as unknown as { full_name: string | null } | null
+      const p = g.profiles as unknown as { full_name: string | null } | null
       return {
         ...g,
         profiles: {
-          full_name: profile?.full_name || 'Anonymous'
+          full_name: p?.full_name || 'Anonymous'
         }
       }
     })
 
     const formattedFeedbacks = (feedbacks || []).map(f => {
-      const profile = f.profiles as unknown as { full_name: string | null; email: string } | null
+      const p = f.profiles as unknown as { full_name: string | null; email: string } | null
       return {
         ...f,
         profiles: {
-          full_name: profile?.full_name || 'Anonymous',
-          email: profile?.email || ''
+          full_name: p?.full_name || 'Anonymous',
+          email: p?.email || ''
         }
       }
     })
 
     return (
       <ManagerDashboard
+        managerProfile={{
+          full_name: profile.full_name,
+          email: profile.email,
+        }}
         employees={employees || []}
         goals={formattedGoals}
         feedbacks={formattedFeedbacks}
@@ -106,8 +112,26 @@ export default async function DashboardPage() {
       .order('created_at', { ascending: false })
       .limit(20)
 
+    // Fetch employee's manager info if linked
+    let managerInfo: { full_name: string | null; email: string } | null = null
+    if (profile.manager_id) {
+      const { data: mgr } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', profile.manager_id)
+        .single()
+      if (mgr) {
+        managerInfo = mgr
+      }
+    }
+
     return (
       <EmployeeDashboard
+        employeeProfile={{
+          full_name: profile.full_name,
+          email: profile.email,
+        }}
+        managerInfo={managerInfo}
         goals={goals || []}
         feedbacks={feedbacks || []}
       />
