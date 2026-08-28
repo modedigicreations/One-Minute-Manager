@@ -5,12 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
   Award, 
-  Briefcase, 
-  User, 
   LogOut, 
   Users, 
-  PlusCircle, 
-  MessageSquare,
   LayoutDashboard,
   CheckSquare,
   Menu,

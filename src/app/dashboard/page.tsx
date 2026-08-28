@@ -59,20 +59,26 @@ export default async function DashboardPage() {
     }
 
     // Format goals data to include employee names correctly
-    const formattedGoals = (goals || []).map(g => ({
-      ...g,
-      profiles: {
-        full_name: (g.profiles as any)?.full_name || 'Anonymous'
+    const formattedGoals = (goals || []).map(g => {
+      const profile = g.profiles as unknown as { full_name: string | null } | null
+      return {
+        ...g,
+        profiles: {
+          full_name: profile?.full_name || 'Anonymous'
+        }
       }
-    })) as any
+    })
 
-    const formattedFeedbacks = (feedbacks || []).map(f => ({
-      ...f,
-      profiles: {
-        full_name: (f.profiles as any)?.full_name || 'Anonymous',
-        email: (f.profiles as any)?.email || ''
+    const formattedFeedbacks = (feedbacks || []).map(f => {
+      const profile = f.profiles as unknown as { full_name: string | null; email: string } | null
+      return {
+        ...f,
+        profiles: {
+          full_name: profile?.full_name || 'Anonymous',
+          email: profile?.email || ''
+        }
       }
-    })) as any
+    })
 
     return (
       <ManagerDashboard

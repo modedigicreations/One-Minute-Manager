@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge, GoalStatusBadge } from '@/components/ui/Badge'
-import { Award, Compass, MessageSquare, BookOpen, Clock } from 'lucide-react'
+import { Award, Compass, MessageSquare, BookOpen } from 'lucide-react'
 import { updateGoalProgressAction } from '@/app/dashboard/goals/actions'
+import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
 
 interface Goal {
   id: string
@@ -87,7 +88,7 @@ export default function EmployeeDashboard({ goals, feedbacks }: EmployeeDashboar
                       <div>
                         <h4 className="font-bold text-slate-800 text-lg">{goal.objective}</h4>
                         <span className="text-xs text-slate-400 font-semibold block mt-0.5">
-                          Deadline: {new Date(goal.deadline).toLocaleDateString()}
+                          Deadline: {formatStaticDate(goal.deadline)}
                         </span>
                       </div>
                       <GoalStatusBadge status={goal.status} />
@@ -148,7 +149,7 @@ export default function EmployeeDashboard({ goals, feedbacks }: EmployeeDashboar
                   <div key={goal.id} className="p-5 flex items-center justify-between gap-4">
                     <div>
                       <h4 className="font-bold text-sm text-slate-700 line-through">{goal.objective}</h4>
-                      <span className="text-[10px] text-slate-400 font-medium">Met target on {new Date(goal.deadline).toLocaleDateString()}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">Met target on {formatStaticDate(goal.deadline)}</span>
                     </div>
                     <GoalStatusBadge status="completed" />
                   </div>
@@ -199,7 +200,7 @@ export default function EmployeeDashboard({ goals, feedbacks }: EmployeeDashboar
                         &ldquo;{fb.message}&rdquo;
                       </p>
                       <span className="text-[10px] text-slate-400 font-medium block">
-                        {new Date(fb.created_at).toLocaleDateString()} at {new Date(fb.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <ClientFeedbackTime isoString={fb.created_at} />
                       </span>
                     </div>
                   </div>

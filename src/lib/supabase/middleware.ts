@@ -6,7 +6,7 @@ export async function updateSession(request: NextRequest) {
 
   // Never intercept these paths
   const bypass = ['/api/', '/_next/', '/favicon', '/login', '/auth/']
-  if (bypass.some((p) => pathname.startsWith(p))) {
+  if (pathname === '/' || bypass.some((p) => pathname.startsWith(p))) {
     return NextResponse.next({ request })
   }
 
@@ -22,7 +22,6 @@ export async function updateSession(request: NextRequest) {
 
   try {
     const allCookies = request.cookies.getAll()
-    const cookieNames = allCookies.map(c => c.name).join(', ')
 
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
@@ -48,10 +47,11 @@ export async function updateSession(request: NextRequest) {
       // Not authenticated — redirect to login
       const url = request.nextUrl.clone()
       url.pathname = '/login'
+      
+      // Only set error message on actual session failure, not default logged-out state.
+      // Do not leak sensitive data like cookie values to the client query params.
       if (error) {
-        url.searchParams.set('error', `Session error: ${error.message}. Cookies: [${cookieNames}]`)
-      } else {
-        url.searchParams.set('error', `No active user session. Cookies: [${cookieNames}]`)
+        url.searchParams.set('error', 'Session validation failed. Please sign in again.')
       }
       return NextResponse.redirect(url)
     }

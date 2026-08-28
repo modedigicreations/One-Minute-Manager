@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Badge, GoalStatusBadge } from '@/components/ui/Badge'
+import { GoalStatusBadge } from '@/components/ui/Badge'
 import { 
   CheckCircle, 
   Clock, 
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { createGoalAction } from '@/app/dashboard/goals/actions'
 import { createFeedbackAction } from '@/app/dashboard/feedback/actions'
+import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
 
 interface Employee {
   id: string
@@ -299,7 +300,7 @@ export default function ManagerDashboard({ employees, goals, feedbacks, stats }:
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs font-semibold text-slate-400">
-                      <span>Deadline: {new Date(goal.deadline).toLocaleDateString()}</span>
+                      <span>Deadline: {formatStaticDate(goal.deadline)}</span>
                       
                       <div className="flex items-center gap-2 w-full sm:w-1/2">
                         <span className="shrink-0">{goal.progress}%</span>
@@ -410,7 +411,7 @@ export default function ManagerDashboard({ employees, goals, feedbacks, stats }:
                         &ldquo;{fb.message}&rdquo;
                       </p>
                       <span className="text-[10px] text-slate-400 font-medium block">
-                        {new Date(fb.created_at).toLocaleDateString()} at {new Date(fb.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <ClientFeedbackTime isoString={fb.created_at} />
                       </span>
                     </div>
                   </div>

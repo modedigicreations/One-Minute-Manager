@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Loader2, Award, Briefcase, User, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Award, Briefcase, User } from 'lucide-react'
 import { loginAction, signupAction } from '@/app/auth/actions'
 
 interface ManagerOption {
@@ -27,7 +27,9 @@ export default function LoginForm() {
   // Fetch managers when entering signup mode
   useEffect(() => {
     if (mode === 'signup' && role === 'employee') {
-      setLoadingManagers(true)
+      Promise.resolve().then(() => {
+        setLoadingManagers(true)
+      })
       fetch('/api/auth/managers')
         .then((res) => res.json())
         .then((data) => {

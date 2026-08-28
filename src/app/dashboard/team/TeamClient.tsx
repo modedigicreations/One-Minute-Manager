@@ -7,13 +7,13 @@ import { Badge, GoalStatusBadge } from '@/components/ui/Badge'
 import { 
   Award, 
   Compass, 
-  User, 
   ArrowLeft, 
   TrendingUp, 
   MessageSquare,
   AlertCircle
 } from 'lucide-react'
 import { createFeedbackAction } from '@/app/dashboard/feedback/actions'
+import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
 
 interface Employee {
   id: string
@@ -171,7 +171,7 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs font-semibold text-slate-400">
-                        <span>Deadline: {new Date(goal.deadline).toLocaleDateString()}</span>
+                        <span>Deadline: {formatStaticDate(goal.deadline)}</span>
                         
                         <div className="flex items-center gap-2 w-full sm:w-1/2">
                           <span>{goal.progress}%</span>
@@ -235,7 +235,7 @@ export default function TeamClient({ employees, goals, feedbacks }: TeamClientPr
                           &ldquo;{fb.message}&rdquo;
                         </p>
                         <span className="text-[10px] text-slate-400 font-medium block">
-                          {new Date(fb.created_at).toLocaleDateString()}
+                          <ClientFeedbackTime isoString={fb.created_at} dateOnly={true} />
                         </span>
                       </div>
                     </div>
