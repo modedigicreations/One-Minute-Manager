@@ -130,27 +130,27 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
         </button>
 
         {/* Profile Card */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 bg-white rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-700 text-white flex items-center justify-center font-extrabold text-2xl shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-6 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-700 text-white flex items-center justify-center font-extrabold text-xl sm:text-2xl shadow-sm shrink-0">
               {selectedEmp.full_name ? selectedEmp.full_name[0].toUpperCase() : 'E'}
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight truncate">
                 {selectedEmp.full_name || 'Team Member'}
               </h1>
-              <p className="text-slate-500 text-xs sm:text-sm font-medium">{selectedEmp.email}</p>
+              <p className="text-slate-500 text-xs sm:text-sm font-medium truncate">{selectedEmp.email}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="success"
               onClick={() => {
                 setFeedbackType('praising')
                 setFeedbackModalOpen(true)
               }}
-              className="flex items-center gap-1.5 text-xs"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-xs py-2"
             >
               <Award size={15} />
               <span>Log Praise</span>
@@ -161,7 +161,7 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                 setFeedbackType('correction')
                 setFeedbackModalOpen(true)
               }}
-              className="flex items-center gap-1.5 text-xs"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-xs py-2"
             >
               <Compass size={15} />
               <span>Log Re-Direct</span>
@@ -170,47 +170,47 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
         </div>
 
         {/* Quick Stats for this member */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 bg-white rounded-xl border border-slate-200/80 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Goals</span>
-            <span className="text-xl font-extrabold text-slate-900">{selectedGoals.length}</span>
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+          <div className="p-3 sm:p-4 bg-white rounded-xl border border-slate-200/80 text-center">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">Goals</span>
+            <span className="text-lg sm:text-xl font-extrabold text-slate-900">{selectedGoals.length}</span>
           </div>
-          <div className="p-4 bg-white rounded-xl border border-slate-200/80 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Completed</span>
-            <span className="text-xl font-extrabold text-emerald-600">{completedGoalsCount}</span>
+          <div className="p-3 sm:p-4 bg-white rounded-xl border border-slate-200/80 text-center">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">Done</span>
+            <span className="text-lg sm:text-xl font-extrabold text-emerald-600">{completedGoalsCount}</span>
           </div>
-          <div className="p-4 bg-white rounded-xl border border-slate-200/80 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Re-Directs Needed</span>
-            <span className={`text-xl font-extrabold ${behindGoalsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+          <div className="p-3 sm:p-4 bg-white rounded-xl border border-slate-200/80 text-center">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">Re-Direct</span>
+            <span className={`text-lg sm:text-xl font-extrabold ${behindGoalsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
               {behindGoalsCount}
             </span>
           </div>
         </div>
 
         {/* Drill down Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Active Goals list (Span 2) */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="p-4 sm:p-6 pb-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <TrendingUp size={18} className="text-slate-500" />
                     <span>Performance Goals</span>
                   </CardTitle>
-                  <CardDescription>Expectations and current completion progress.</CardDescription>
+                  <CardDescription className="text-xs">Expectations and current completion progress.</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="divide-y divide-slate-100 p-0">
                 {selectedGoals.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400 text-xs">
+                  <div className="p-6 sm:p-8 text-center text-slate-400 text-xs">
                     No goals assigned to this team member yet. Set one from the main dashboard!
                   </div>
                 ) : (
                   selectedGoals.map((goal) => (
-                    <div key={goal.id} className="p-5 space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <h4 className="font-bold text-slate-900 text-sm">{goal.objective}</h4>
+                    <div key={goal.id} className="p-4 sm:p-5 space-y-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <h4 className="font-bold text-slate-900 text-sm leading-snug">{goal.objective}</h4>
                         <GoalStatusBadge status={goal.status} />
                       </div>
 
@@ -218,8 +218,8 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                         <strong className="text-slate-700">Expected Result:</strong> {goal.expected_result}
                       </div>
 
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs font-semibold text-slate-400">
-                        <span className="text-slate-500">Deadline: {formatStaticDate(goal.deadline)}</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-semibold text-slate-400">
+                        <span className="text-slate-500 text-[11px]">Deadline: {formatStaticDate(goal.deadline)}</span>
                         
                         <div className="flex items-center gap-2 w-full sm:w-1/2">
                           <span className="text-xs font-bold text-slate-700">{goal.progress}%</span>
@@ -247,29 +247,29 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
           {/* Feedback History (Span 1) */}
           <div className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="p-4 pb-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
                     <MessageSquare size={17} className="text-slate-500" />
                     <span>Feedback History</span>
                   </CardTitle>
-                  <CardDescription>Praisings and corrections logged for this member.</CardDescription>
+                  <CardDescription className="text-xs">Praisings and corrections logged.</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4 p-5">
+              <CardContent className="space-y-3.5 p-4 pt-1">
                 {selectedFeedbacks.length === 0 ? (
-                  <div className="text-center text-slate-400 text-xs py-6">
+                  <div className="text-center text-slate-400 text-xs py-5">
                     No feedback recorded yet. Use the buttons above to log immediate praise!
                   </div>
                 ) : (
                   selectedFeedbacks.map((fb) => (
-                    <div key={fb.id} className="flex gap-3">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 ${
+                    <div key={fb.id} className="flex gap-2.5">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 ${
                         fb.type === 'praising' 
                           ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
                           : 'bg-rose-50 text-rose-600 border-rose-200'
                       }`}>
-                        {fb.type === 'praising' ? <Award size={15} /> : <Compass size={15} />}
+                        {fb.type === 'praising' ? <Award size={14} /> : <Compass size={14} />}
                       </div>
                       <div className="space-y-1 min-w-0 flex-1">
                         <span className={`inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-bold border tracking-wide uppercase ${
@@ -294,35 +294,36 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
           </div>
         </div>
 
-        {/* FEEDBACK MODAL */}
+        {/* FEEDBACK MODAL (Bottom Sheet) */}
         {feedbackModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
+            <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
+              <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
+              <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold ${
                     feedbackType === 'praising' ? 'bg-emerald-500 text-slate-950' : 'bg-rose-500 text-white'
                   }`}>
                     {feedbackType === 'praising' ? <Award size={15} /> : <Compass size={15} />}
                   </div>
-                  <h3 className="font-bold text-base">Deliver One-Minute Feedback</h3>
+                  <h3 className="font-bold text-sm sm:text-base">Deliver One-Minute Feedback</h3>
                 </div>
                 <button onClick={() => setFeedbackModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer p-1">
                   <X size={18} />
                 </button>
               </div>
-              <form onSubmit={handleCreateFeedback} className="p-6 space-y-4">
+              <form onSubmit={handleCreateFeedback} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
                 {error && <div className="bg-rose-50 text-rose-700 p-3 rounded-xl text-xs font-bold border border-rose-200">{error}</div>}
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Feedback Type
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <button
                       type="button"
                       onClick={() => setFeedbackType('praising')}
-                      className={`flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-semibold transition ${
+                      className={`flex items-center justify-center gap-1.5 p-2.5 border rounded-xl cursor-pointer text-xs sm:text-sm font-semibold transition ${
                         feedbackType === 'praising' 
                           ? 'border-emerald-500 bg-emerald-50/70 text-emerald-700 ring-2 ring-emerald-500/20' 
                           : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
@@ -334,7 +335,7 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                     <button
                       type="button"
                       onClick={() => setFeedbackType('correction')}
-                      className={`flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-semibold transition ${
+                      className={`flex items-center justify-center gap-1.5 p-2.5 border rounded-xl cursor-pointer text-xs sm:text-sm font-semibold transition ${
                         feedbackType === 'correction' 
                           ? 'border-rose-500 bg-rose-50/70 text-rose-700 ring-2 ring-rose-500/20' 
                           : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
@@ -366,7 +367,7 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                   />
                 </div>
 
-                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 pb-safe">
                   <Button type="button" variant="ghost" onClick={() => setFeedbackModalOpen(false)}>Cancel</Button>
                   <Button 
                     type="submit" 
@@ -388,11 +389,11 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
 
   // Otherwise, render list of team members
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-5 sm:space-y-6 pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">My Team</h1>
+          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">My Team</h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Overview of team members, active goals, and praise tracking.</p>
         </div>
 
@@ -404,7 +405,7 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search team member..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+              className="w-full pl-8 pr-3 py-2 sm:py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
             />
           </div>
         )}
@@ -412,23 +413,23 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
 
       {/* When 0 employees exist: Onboarding Empty State */}
       {employees.length === 0 ? (
-        <Card className="p-8 text-center max-w-xl mx-auto space-y-5">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
-            <Users size={26} />
+        <Card className="p-6 sm:p-8 text-center max-w-xl mx-auto space-y-4 sm:space-y-5">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
+            <Users size={24} />
           </div>
 
           <div className="space-y-1">
-            <h3 className="font-bold text-slate-900 text-lg">No Team Members Linked Yet</h3>
+            <h3 className="font-bold text-slate-900 text-base sm:text-lg">No Team Members Linked Yet</h3>
             <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
               Employees link to your workspace when registering. Share your manager email address so they can select you during account creation.
             </p>
           </div>
 
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 max-w-md mx-auto space-y-2">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 max-w-md mx-auto space-y-2">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-left">
               Share With Your Team:
             </span>
-            <div className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-lg">
+            <div className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-lg gap-2">
               <span className="text-xs font-mono font-bold text-slate-800 truncate">
                 {managerProfile?.email || 'Your Registered Email'}
               </span>
@@ -453,7 +454,7 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredEmployees.map((emp) => {
             const empGoals = goals.filter(g => g.employee_id === emp.id)
             const behindCount = empGoals.filter(g => g.status === 'behind').length
@@ -466,9 +467,9 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                 className="cursor-pointer flex flex-col justify-between"
                 onClick={() => setSelectedEmpId(emp.id)}
               >
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center font-extrabold text-slate-700 text-lg shadow-xs">
+                <CardContent className="p-4 sm:p-6 space-y-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center font-extrabold text-slate-700 text-base sm:text-lg shadow-xs shrink-0">
                       {emp.full_name ? emp.full_name[0].toUpperCase() : 'E'}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -477,25 +478,25 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-1 text-center">
-                    <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="grid grid-cols-2 gap-2 pt-0.5 text-center">
+                    <div className="p-2 sm:p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
                       <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Goals</span>
-                      <span className="text-lg font-extrabold text-slate-800">{empGoals.length}</span>
+                      <span className="text-base sm:text-lg font-extrabold text-slate-800">{empGoals.length}</span>
                     </div>
-                    <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
-                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Completed</span>
-                      <span className="text-lg font-extrabold text-emerald-600">{completedCount}</span>
+                    <div className="p-2 sm:p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Done</span>
+                      <span className="text-base sm:text-lg font-extrabold text-emerald-600">{completedCount}</span>
                     </div>
                   </div>
 
                   {behindCount > 0 && (
                     <div className="flex items-center gap-1.5 text-xs text-rose-700 bg-rose-50 border border-rose-200/80 p-2.5 rounded-xl font-bold">
                       <AlertCircle size={14} className="shrink-0" />
-                      <span>{behindCount} goal(s) falling behind!</span>
+                      <span>{behindCount} goal(s) behind!</span>
                     </div>
                   )}
                 </CardContent>
-                <CardHeader className="bg-slate-50/70 border-t border-slate-100 py-3 rounded-b-2xl">
+                <CardHeader className="bg-slate-50/70 border-t border-slate-100 py-2.5 sm:py-3 rounded-b-2xl">
                   <span className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition">
                     <span>View Profile & Performance</span>
                     <ArrowRight size={13} />

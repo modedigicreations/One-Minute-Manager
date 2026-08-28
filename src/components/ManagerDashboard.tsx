@@ -187,37 +187,34 @@ export default function ManagerDashboard({
   const completionRate = goals.length > 0 ? Math.round((stats.completed / goals.length) * 100) : 0
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8">
       {/* ============================================================ */}
       {/* 1. WELCOME & COMMAND HEADER */}
       {/* ============================================================ */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/90 backdrop-blur-md p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Welcome back, {managerFirstName} 👋
+          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 mb-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Welcome, {managerFirstName} 👋
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live Sync
             </span>
           </div>
-          <p className="text-slate-500 text-xs sm:text-sm max-w-2xl">
-            Focus on clear expectations, immediate praising, and early adjustments. 
-            <span className="hidden sm:inline italic text-slate-400 ml-1">
-              &ldquo;One-minute goals set direction. One-minute praisings build champions.&rdquo;
-            </span>
+          <p className="text-slate-500 text-xs sm:text-sm max-w-2xl leading-relaxed">
+            Focus on clear expectations, immediate praising, and early adjustments.
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Action Buttons (Mobile Grid, Desktop Row) */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto pt-1 md:pt-0">
           <Button 
             variant="secondary"
             onClick={() => setInviteModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold py-2 h-10 sm:h-9"
           >
-            <Users size={15} className="text-slate-500" />
+            <Users size={14} className="text-slate-500" />
             <span>Invite Team</span>
           </Button>
 
@@ -228,42 +225,44 @@ export default function ManagerDashboard({
               setFeedbackType('praising')
               setFeedbackModalOpen(true)
             }}
-            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50/80 border border-emerald-200/60"
+            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 border border-emerald-200/70 py-2 h-10 sm:h-9"
           >
-            <Award size={15} className="text-emerald-600" />
+            <Award size={14} className="text-emerald-600" />
             <span>Log Feedback</span>
           </Button>
 
           <Button 
             onClick={() => setGoalModalOpen(true)} 
-            className="flex items-center gap-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm shadow-slate-900/20"
+            className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white py-2 h-10 sm:h-9 shadow-sm"
           >
-            <Plus size={15} />
+            <Plus size={14} />
             <span>Set One-Minute Goal</span>
           </Button>
         </div>
       </div>
 
       {/* ============================================================ */}
-      {/* 2. EXECUTIVE METRICS ROW (4 CARDS) */}
+      {/* 2. EXECUTIVE METRICS ROW (2x2 on Mobile, 4-col on Desktop) */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         {/* Card 1: Goals Completed */}
         <Card hover className="relative overflow-hidden border-slate-200/80">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Goals Completed</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-slate-900">{stats.completed}</span>
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
+            <div className="space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+                Completed
+              </span>
+              <div className="flex items-baseline gap-1 sm:gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{stats.completed}</span>
                 {goals.length > 0 && (
-                  <span className="text-xs font-bold text-emerald-600">({completionRate}%)</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-emerald-600">({completionRate}%)</span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Achieved targets</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">Achieved targets</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50/80 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 size={24} />
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50/80 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+              <CheckCircle2 size={18} className="sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
@@ -271,16 +270,18 @@ export default function ManagerDashboard({
         {/* Card 2: In Progress */}
         <Card hover className="relative overflow-hidden border-slate-200/80">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 to-indigo-500" />
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">In Progress</span>
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
+            <div className="space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+                In Progress
+              </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-slate-900">{stats.inProgress}</span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{stats.inProgress}</span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Active focus areas</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">Active focus</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-sky-50/80 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
-              <Clock size={24} />
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-sky-50/80 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
+              <Clock size={18} className="sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
@@ -288,23 +289,25 @@ export default function ManagerDashboard({
         {/* Card 3: Falling Behind */}
         <Card hover className="relative overflow-hidden border-slate-200/80">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-400 to-amber-500" />
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Falling Behind</span>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-3xl font-extrabold ${stats.behind > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
+            <div className="space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+                Behind
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className={`text-2xl sm:text-3xl font-extrabold ${stats.behind > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
                   {stats.behind}
                 </span>
                 {stats.behind > 0 && (
-                  <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                    Needs Adjustment
+                  <span className="text-[8px] sm:text-[10px] font-bold text-rose-600 uppercase bg-rose-50 px-1 py-0.2 rounded border border-rose-200">
+                    Alert
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">One-Minute Re-Directs</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">Re-Directs needed</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-rose-50/80 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
-              <AlertTriangle size={24} />
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-rose-50/80 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+              <AlertTriangle size={18} className="sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
@@ -312,19 +315,21 @@ export default function ManagerDashboard({
         {/* Card 4: Feedback Velocity */}
         <Card hover className="relative overflow-hidden border-slate-200/80">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-400 to-fuchsia-500" />
-          <CardContent className="p-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Feedback Velocity</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-slate-900">{feedbacks.length}</span>
-                <span className="text-[10px] font-bold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded border border-violet-200">
-                  {totalPraises}P / {totalCorrections}C
+          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
+            <div className="space-y-0.5 sm:space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+                Feedback
+              </span>
+              <div className="flex items-baseline gap-1 sm:gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{feedbacks.length}</span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-violet-700 bg-violet-50 px-1 py-0.2 rounded border border-violet-200">
+                  {totalPraises}P/{totalCorrections}C
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Aim for 4 Praises to 1 Re-Direct</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">4:1 Target ratio</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-violet-50/80 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
-              <Award size={24} />
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-violet-50/80 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
+              <Award size={18} className="sm:w-6 sm:h-6" />
             </div>
           </CardContent>
         </Card>
@@ -334,36 +339,36 @@ export default function ManagerDashboard({
       {/* 3. ONBOARDING WIDGET (Shown when team has 0 members) */}
       {/* ============================================================ */}
       {employees.length === 0 && (
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white shadow-lg shadow-slate-900/10 border border-slate-700/60 relative overflow-hidden">
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white shadow-lg shadow-slate-900/10 border border-slate-700/60 relative overflow-hidden">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
             <div className="space-y-2 max-w-2xl">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-xs font-bold font-mono tracking-wider text-emerald-400 uppercase">
+                <span className="text-[10px] sm:text-xs font-bold font-mono tracking-wider text-emerald-400 uppercase">
                   Quick Start: Connect Your Employees
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight">
                 Your Management Workspace is Ready!
               </h2>
               <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                To start setting One-Minute Goals and sharing immediate feedback, have your team members register on this app and select you as their manager.
+                Have your team members register on this app and select you as their manager to start setting 60-second goals.
               </p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/15 shrink-0 space-y-3">
-              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
+            <div className="bg-white/10 backdrop-blur-md p-3.5 sm:p-4 rounded-xl border border-white/15 shrink-0 space-y-2.5">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
                 Your Manager Identification:
               </span>
-              <div className="flex items-center gap-2 bg-slate-950/60 px-3 py-2 rounded-lg border border-white/10">
-                <span className="text-xs font-mono text-emerald-300 select-all font-semibold">
+              <div className="flex items-center justify-between gap-2 bg-slate-950/60 px-3 py-2 rounded-lg border border-white/10">
+                <span className="text-xs font-mono text-emerald-300 truncate font-semibold">
                   {managerProfile?.email || 'Your Registered Email'}
                 </span>
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="ml-2 text-slate-400 hover:text-white transition cursor-pointer p-1"
-                  title="Copy email to clipboard"
+                  className="text-slate-400 hover:text-white transition cursor-pointer p-1 shrink-0"
+                  title="Copy email"
                 >
                   {copiedEmail ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                 </button>
@@ -374,7 +379,7 @@ export default function ManagerDashboard({
                 onClick={() => setInviteModalOpen(true)}
                 className="w-full text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                <span>View Full Onboarding Steps</span>
+                <span>View Onboarding Steps</span>
                 <ArrowRight size={13} />
               </Button>
             </div>
@@ -385,22 +390,22 @@ export default function ManagerDashboard({
       {/* ============================================================ */}
       {/* 4. MAIN DASHBOARD CONTENT (2 COLUMNS) */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
         {/* Left Column (Span 2): Team & Performance Goals */}
-        <div className="xl:col-span-2 space-y-8">
+        <div className="xl:col-span-2 space-y-6 sm:space-y-8">
           
           {/* Card: Team Members */}
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6 pb-3">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Users size={18} className="text-slate-500" />
                   <span>My Team Members</span>
                 </CardTitle>
-                <CardDescription>Direct reports, active expectations, and rapid feedback loops.</CardDescription>
+                <CardDescription className="text-xs">Direct reports and rapid feedback loops.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 rounded-full">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 rounded-full">
                   {employees.length} {employees.length === 1 ? 'member' : 'members'}
                 </span>
                 {employees.length === 0 && (
@@ -408,7 +413,7 @@ export default function ManagerDashboard({
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setInviteModalOpen(true)}
-                    className="text-xs text-emerald-700 hover:bg-emerald-50 flex items-center gap-1"
+                    className="text-xs text-emerald-700 hover:bg-emerald-50 flex items-center gap-1 p-1 sm:px-2"
                   >
                     <Plus size={13} />
                     <span>How to add</span>
@@ -418,14 +423,14 @@ export default function ManagerDashboard({
             </CardHeader>
             <CardContent className="p-0 divide-y divide-slate-100">
               {employees.length === 0 ? (
-                <div className="p-8 text-center space-y-3">
+                <div className="p-6 sm:p-8 text-center space-y-3">
                   <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-400 mx-auto">
                     <UserCheck size={22} />
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm">No employees connected yet</h4>
                     <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                      Employees connect to your dashboard by selecting <strong>{managerProfile?.full_name || 'your name'}</strong> ({managerProfile?.email}) upon registration.
+                      Employees connect to your dashboard by selecting <strong>{managerProfile?.full_name || 'your name'}</strong> upon registration.
                     </p>
                   </div>
                   <Button 
@@ -445,37 +450,37 @@ export default function ManagerDashboard({
                   const completedCount = empGoals.filter(g => g.status === 'completed').length
 
                   return (
-                    <div key={emp.id} className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-slate-50/50 transition">
+                    <div key={emp.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 hover:bg-slate-50/50 transition">
                       {/* Left: Info */}
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-base shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-base shadow-sm shrink-0">
                           {emp.full_name ? emp.full_name[0].toUpperCase() : 'E'}
                         </div>
-                        <div>
-                          <h4 className="font-bold text-slate-900 text-sm">{emp.full_name || 'Anonymous Employee'}</h4>
-                          <p className="text-xs text-slate-400 font-medium">{emp.email}</p>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-slate-900 text-sm truncate">{emp.full_name || 'Anonymous Employee'}</h4>
+                          <p className="text-xs text-slate-400 truncate">{emp.email}</p>
                         </div>
                       </div>
 
                       {/* Middle: Active Goals Summary */}
-                      <div className="flex items-center gap-3 text-xs text-slate-500">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 font-semibold text-slate-700">
+                      <div className="flex items-center gap-2 text-xs text-slate-500 pl-13 sm:pl-0">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 font-semibold text-slate-700 text-[11px]">
                           {empGoals.length} {empGoals.length === 1 ? 'goal' : 'goals'}
                         </span>
                         {completedCount > 0 && (
-                          <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded">
+                          <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded text-[11px]">
                             {completedCount} met
                           </span>
                         )}
                         {behindCount > 0 && (
-                          <span className="text-rose-600 font-bold bg-rose-50 border border-rose-200/60 px-1.5 py-0.5 rounded">
+                          <span className="text-rose-600 font-bold bg-rose-50 border border-rose-200/60 px-1.5 py-0.5 rounded text-[11px]">
                             {behindCount} behind
                           </span>
                         )}
                       </div>
 
                       {/* Right: Quick actions */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 pl-13 sm:pl-0">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -484,7 +489,7 @@ export default function ManagerDashboard({
                             setFeedbackType('praising')
                             setFeedbackModalOpen(true)
                           }}
-                          className="text-emerald-700 hover:bg-emerald-50 border border-emerald-200/50 flex items-center gap-1 text-xs py-1"
+                          className="flex-1 sm:flex-none text-emerald-700 hover:bg-emerald-50 border border-emerald-200/50 flex items-center justify-center gap-1 text-xs py-1.5 h-8"
                         >
                           <Award size={13} />
                           Praise
@@ -497,7 +502,7 @@ export default function ManagerDashboard({
                             setFeedbackType('correction')
                             setFeedbackModalOpen(true)
                           }}
-                          className="text-rose-700 hover:bg-rose-50 border border-rose-200/50 flex items-center gap-1 text-xs py-1"
+                          className="flex-1 sm:flex-none text-rose-700 hover:bg-rose-50 border border-rose-200/50 flex items-center justify-center gap-1 text-xs py-1.5 h-8"
                         >
                           <Compass size={13} />
                           Re-Direct
@@ -512,36 +517,36 @@ export default function ManagerDashboard({
 
           {/* Card: Active Performance Goals */}
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6 pb-3">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <TrendingUp size={18} className="text-slate-500" />
                   <span>One-Minute Performance Goals</span>
                 </CardTitle>
-                <CardDescription>Concise targets agreed upon by manager and employee.</CardDescription>
+                <CardDescription className="text-xs">Concise targets agreed upon with team members.</CardDescription>
               </div>
               <Button 
                 size="sm" 
                 onClick={() => setGoalModalOpen(true)}
-                className="flex items-center gap-1 text-xs bg-slate-900 hover:bg-slate-800 text-white"
+                className="flex items-center gap-1 text-xs bg-slate-900 hover:bg-slate-800 text-white shrink-0"
               >
                 <Plus size={13} />
                 <span>New Goal</span>
               </Button>
             </CardHeader>
 
-            {/* Filter & Search Bar */}
+            {/* Filter & Search Bar with horizontal touch scroll */}
             {goals.length > 0 && (
-              <div className="px-6 py-3 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="px-4 sm:px-6 py-2.5 bg-slate-50/80 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 {/* Search */}
-                <div className="relative flex-1 max-w-xs">
+                <div className="relative w-full sm:max-w-xs">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={goalSearch}
                     onChange={(e) => setGoalSearch(e.target.value)}
                     placeholder="Search goals or team..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                    className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
                   />
                   {goalSearch && (
                     <button 
@@ -553,11 +558,11 @@ export default function ManagerDashboard({
                   )}
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="flex items-center gap-1 text-xs">
+                {/* Filter Tabs (Horizontal Scroll on Mobile) */}
+                <div className="flex items-center gap-1 text-xs overflow-x-auto no-scrollbar pb-1 sm:pb-0">
                   <button
                     onClick={() => setGoalFilter('all')}
-                    className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                    className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 ${
                       goalFilter === 'all' 
                         ? 'bg-slate-900 text-white shadow-xs' 
                         : 'text-slate-500 hover:text-slate-800'
@@ -567,7 +572,7 @@ export default function ManagerDashboard({
                   </button>
                   <button
                     onClick={() => setGoalFilter('in_progress')}
-                    className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                    className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 ${
                       goalFilter === 'in_progress' 
                         ? 'bg-slate-900 text-white shadow-xs' 
                         : 'text-slate-500 hover:text-slate-800'
@@ -577,18 +582,18 @@ export default function ManagerDashboard({
                   </button>
                   <button
                     onClick={() => setGoalFilter('completed')}
-                    className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                    className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 ${
                       goalFilter === 'completed' 
                         ? 'bg-slate-900 text-white shadow-xs' 
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    Completed ({stats.completed})
+                    Done ({stats.completed})
                   </button>
                   {stats.behind > 0 && (
                     <button
                       onClick={() => setGoalFilter('behind')}
-                      className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                      className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 ${
                         goalFilter === 'behind' 
                           ? 'bg-rose-600 text-white shadow-xs' 
                           : 'text-rose-600 hover:bg-rose-50'
@@ -604,7 +609,7 @@ export default function ManagerDashboard({
             <CardContent className="p-0 divide-y divide-slate-100">
               {goals.length === 0 ? (
                 /* One-Minute Goal Blueprint Empty State */
-                <div className="p-8 text-center space-y-4">
+                <div className="p-6 sm:p-8 text-center space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto">
                     <Sparkles size={22} />
                   </div>
@@ -615,21 +620,21 @@ export default function ManagerDashboard({
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto pt-2 text-left">
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-w-xl mx-auto pt-2 text-left">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-0.5">
                       <div className="text-[10px] font-bold text-indigo-600 uppercase">Step 1</div>
                       <div className="font-bold text-xs text-slate-800">Clear Agreement</div>
-                      <p className="text-[11px] text-slate-500 leading-snug">Align on what good behavior looks like.</p>
+                      <p className="text-[11px] text-slate-500 leading-snug">Align on what good looks like.</p>
                     </div>
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-0.5">
                       <div className="text-[10px] font-bold text-emerald-600 uppercase">Step 2</div>
                       <div className="font-bold text-xs text-slate-800">Expected Result</div>
-                      <p className="text-[11px] text-slate-500 leading-snug">Quantifiable metric or tangible milestone.</p>
+                      <p className="text-[11px] text-slate-500 leading-snug">Quantifiable standards.</p>
                     </div>
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-0.5">
                       <div className="text-[10px] font-bold text-sky-600 uppercase">Step 3</div>
                       <div className="font-bold text-xs text-slate-800">60-Sec Check-in</div>
-                      <p className="text-[11px] text-slate-500 leading-snug">Employee compares real results to expectations.</p>
+                      <p className="text-[11px] text-slate-500 leading-snug">Fast progress verification.</p>
                     </div>
                   </div>
 
@@ -642,16 +647,16 @@ export default function ManagerDashboard({
                   </Button>
                 </div>
               ) : filteredGoals.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs">
-                  No goals match the filter query &ldquo;{goalSearch || goalFilter}&rdquo;.
+                <div className="p-6 text-center text-slate-400 text-xs">
+                  No goals match the filter query.
                 </div>
               ) : (
                 filteredGoals.map((goal) => (
-                  <div key={goal.id} className="p-5 space-y-3 hover:bg-slate-50/50 transition">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-0.5">
-                        <h4 className="font-bold text-slate-900 text-sm sm:text-base">{goal.objective}</h4>
-                        <p className="text-xs text-slate-400 font-medium">
+                  <div key={goal.id} className="p-4 sm:p-5 space-y-2.5 hover:bg-slate-50/50 transition">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">{goal.objective}</h4>
+                        <p className="text-xs text-slate-400 truncate">
                           Assigned to: <strong className="text-slate-700 font-semibold">{goal.profiles?.full_name || 'Anonymous'}</strong>
                         </p>
                       </div>
@@ -662,8 +667,8 @@ export default function ManagerDashboard({
                       <strong className="text-slate-700">Expected Result:</strong> {goal.expected_result}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs font-semibold text-slate-400 pt-1">
-                      <span className="text-slate-500">Deadline: {formatStaticDate(goal.deadline)}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-semibold text-slate-400 pt-1">
+                      <span className="text-slate-500 text-[11px]">Deadline: {formatStaticDate(goal.deadline)}</span>
                       
                       <div className="flex items-center gap-2.5 w-full sm:w-1/2">
                         <span className="text-xs font-bold text-slate-700 shrink-0 w-8">{goal.progress}%</span>
@@ -694,24 +699,24 @@ export default function ManagerDashboard({
           {/* Attention Alerts Box */}
           {attentionEmployees.length > 0 && (
             <Card className="border-rose-200/80 bg-rose-50/25">
-              <CardHeader className="border-rose-100 pb-3">
+              <CardHeader className="p-4 border-rose-100 pb-2.5">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-rose-800 text-sm">
                     <AlertTriangle size={16} />
                     <span>Requires Attention</span>
                   </CardTitle>
                   <CardDescription className="text-rose-700/80 text-[11px]">
-                    Actionable triggers: goals falling behind or missing recent feedback.
+                    Goals falling behind or missing recent feedback.
                   </CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2.5 p-4">
+              <CardContent className="space-y-2 p-4 pt-1">
                 {attentionEmployees.map((emp) => {
                   const isBehind = goals.some(g => g.employee_id === emp.id && g.status === 'behind')
                   return (
                     <div 
                       key={emp.id} 
-                      className="flex items-center justify-between gap-2 p-3 bg-white border border-rose-200/60 rounded-xl shadow-xs"
+                      className="flex items-center justify-between gap-2 p-2.5 bg-white border border-rose-200/60 rounded-xl shadow-xs"
                     >
                       <div className="min-w-0 flex-1">
                         <h5 className="font-bold text-xs text-slate-900 truncate">{emp.full_name}</h5>
@@ -720,7 +725,7 @@ export default function ManagerDashboard({
                             ? 'text-rose-700 bg-rose-50 border border-rose-200' 
                             : 'text-amber-700 bg-amber-50 border border-amber-200'
                         }`}>
-                          {isBehind ? 'Behind Schedule' : 'No Feedback Loop'}
+                          {isBehind ? 'Behind Schedule' : 'No Feedback'}
                         </span>
                       </div>
                       <Button 
@@ -731,8 +736,7 @@ export default function ManagerDashboard({
                           setFeedbackType(isBehind ? 'correction' : 'praising')
                           setFeedbackModalOpen(true)
                         }}
-                        className="text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg shrink-0"
-                        title={isBehind ? 'Log Correction' : 'Log Praise'}
+                        className="text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg shrink-0 h-8"
                       >
                         <ArrowRight size={14} />
                       </Button>
@@ -745,13 +749,13 @@ export default function ManagerDashboard({
 
           {/* Recent Feedbacks Timeline */}
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 pb-2.5">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
                   <MessageSquare size={17} className="text-slate-500" />
                   <span>Recent Feedbacks</span>
                 </CardTitle>
-                <CardDescription>Immediate praisings & adjustments timeline.</CardDescription>
+                <CardDescription className="text-xs">Praisings & adjustments timeline.</CardDescription>
               </div>
               <Button
                 variant="ghost"
@@ -761,21 +765,21 @@ export default function ManagerDashboard({
                   setFeedbackType('praising')
                   setFeedbackModalOpen(true)
                 }}
-                className="text-xs text-emerald-700 hover:bg-emerald-50 p-1.5"
+                className="text-xs text-emerald-700 hover:bg-emerald-50 p-1"
               >
                 <Plus size={14} />
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4 p-5">
+            <CardContent className="space-y-3.5 p-4 pt-1">
               {feedbacks.length === 0 ? (
-                <div className="text-center space-y-3 py-6">
+                <div className="text-center space-y-2.5 py-5">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mx-auto">
                     <Zap size={18} />
                   </div>
                   <div>
                     <h5 className="font-bold text-xs text-slate-800">No feedbacks logged yet</h5>
                     <p className="text-[11px] text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
-                      Catch your employees doing something right! Share immediate praise to reinforce great performance.
+                      Catch your employees doing something right! Share immediate praise today.
                     </p>
                   </div>
                   <Button
@@ -789,18 +793,18 @@ export default function ManagerDashboard({
                     className="text-xs text-emerald-700 font-bold"
                   >
                     <Award size={13} className="mr-1" />
-                    Log Your First Praise
+                    Log First Praise
                   </Button>
                 </div>
               ) : (
                 feedbacks.map((fb) => (
-                  <div key={fb.id} className="flex gap-3 text-left">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 shadow-xs ${
+                  <div key={fb.id} className="flex gap-2.5 text-left">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 shadow-xs ${
                       fb.type === 'praising' 
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80' 
                         : 'bg-rose-50 text-rose-600 border-rose-200/80'
                     }`}>
-                      {fb.type === 'praising' ? <Award size={15} /> : <Compass size={15} />}
+                      {fb.type === 'praising' ? <Award size={14} /> : <Compass size={14} />}
                     </div>
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -831,19 +835,22 @@ export default function ManagerDashboard({
       </div>
 
       {/* ============================================================ */}
-      {/* MODAL 1: CREATE GOAL */}
+      {/* MODAL 1: CREATE GOAL (Mobile Bottom-Sheet, Desktop Modal) */}
       {/* ============================================================ */}
       {goalModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
+            {/* Mobile Sheet Handle */}
+            <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
+
+            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-950 font-bold">
                   <Plus size={16} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base">Set One-Minute Goal</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">Keep it under 250 words with quantifiable results.</p>
+                  <h3 className="font-bold text-sm sm:text-base">Set One-Minute Goal</h3>
+                  <p className="text-[10px] sm:text-[11px] text-slate-400 font-normal">Keep it under 250 words with quantifiable results.</p>
                 </div>
               </div>
               <button 
@@ -854,7 +861,7 @@ export default function ManagerDashboard({
               </button>
             </div>
 
-            <form onSubmit={handleCreateGoal} className="p-6 space-y-4">
+            <form onSubmit={handleCreateGoal} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
               {error && (
                 <div className="bg-rose-50 text-rose-700 p-3 rounded-xl text-xs font-bold border border-rose-200">
                   {error}
@@ -943,7 +950,7 @@ export default function ManagerDashboard({
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 pb-safe">
                 <Button type="button" variant="ghost" onClick={() => setGoalModalOpen(false)}>
                   Cancel
                 </Button>
@@ -962,12 +969,15 @@ export default function ManagerDashboard({
       )}
 
       {/* ============================================================ */}
-      {/* MODAL 2: LOG PRAISING / CORRECTION */}
+      {/* MODAL 2: LOG PRAISING / CORRECTION (Bottom-Sheet) */}
       {/* ============================================================ */}
       {feedbackModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
+            {/* Mobile Handle */}
+            <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
+
+            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold ${
                   feedbackType === 'praising' ? 'bg-emerald-500 text-slate-950' : 'bg-rose-500 text-white'
@@ -975,8 +985,8 @@ export default function ManagerDashboard({
                   {feedbackType === 'praising' ? <Award size={16} /> : <Compass size={16} />}
                 </div>
                 <div>
-                  <h3 className="font-bold text-base">One-Minute Feedback</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">Immediate feedback given within 60 seconds.</p>
+                  <h3 className="font-bold text-sm sm:text-base">One-Minute Feedback</h3>
+                  <p className="text-[10px] sm:text-[11px] text-slate-400 font-normal">Immediate feedback given within 60 seconds.</p>
                 </div>
               </div>
               <button 
@@ -987,7 +997,7 @@ export default function ManagerDashboard({
               </button>
             </div>
 
-            <form onSubmit={handleCreateFeedback} className="p-6 space-y-4">
+            <form onSubmit={handleCreateFeedback} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
               {error && (
                 <div className="bg-rose-50 text-rose-700 p-3 rounded-xl text-xs font-bold border border-rose-200">
                   {error}
@@ -999,30 +1009,30 @@ export default function ManagerDashboard({
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Feedback Type
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     onClick={() => setFeedbackType('praising')}
-                    className={`flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer text-sm font-semibold transition ${
+                    className={`flex items-center justify-center gap-1.5 p-2.5 sm:p-3 border rounded-xl cursor-pointer text-xs sm:text-sm font-semibold transition ${
                       feedbackType === 'praising' 
                         ? 'border-emerald-500 bg-emerald-50/60 text-emerald-700 ring-2 ring-emerald-500/20' 
                         : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
                     }`}
                   >
-                    <Award size={16} />
-                    <span>Praising (Catch doing right)</span>
+                    <Award size={15} />
+                    <span>Praising (Recognition)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setFeedbackType('correction')}
-                    className={`flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer text-sm font-semibold transition ${
+                    className={`flex items-center justify-center gap-1.5 p-2.5 sm:p-3 border rounded-xl cursor-pointer text-xs sm:text-sm font-semibold transition ${
                       feedbackType === 'correction' 
                         ? 'border-rose-500 bg-rose-50/60 text-rose-700 ring-2 ring-rose-500/20' 
                         : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
                     }`}
                   >
-                    <Compass size={16} />
-                    <span>Re-Direct (Adjust behavior)</span>
+                    <Compass size={15} />
+                    <span>Re-Direct (Adjust)</span>
                   </button>
                 </div>
               </div>
@@ -1086,20 +1096,20 @@ export default function ManagerDashboard({
                   rows={4}
                   placeholder={
                     feedbackType === 'praising'
-                      ? 'e.g. John, you resolved that critical bug in 20 minutes today and proactively communicated with the client. It saved the deal. Outstanding work!'
-                      : 'e.g. John, the client report was submitted without the updated numbers today. Let us make sure numbers are double-checked. You do great work and I know you will nail it next time.'
+                      ? 'e.g. John, you resolved that critical bug in 20 minutes today. It saved the deal. Outstanding work!'
+                      : 'e.g. John, the client report was submitted without the updated numbers today. Let us make sure numbers are double-checked. You do great work.'
                   }
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 pb-safe">
                 <Button type="button" variant="ghost" onClick={() => setFeedbackModalOpen(false)}>
                   Cancel
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={employees.length === 0}
+                  disabled={employees.length === 0} 
                   loading={submittingFeedback}
                   variant={feedbackType === 'praising' ? 'success' : 'danger'}
                   className="flex items-center gap-1.5"
@@ -1114,17 +1124,20 @@ export default function ManagerDashboard({
       )}
 
       {/* ============================================================ */}
-      {/* MODAL 3: INVITE TEAM MEMBERS INSTRUCTIONS */}
+      {/* MODAL 3: INVITE TEAM MEMBERS INSTRUCTIONS (Bottom-Sheet) */}
       {/* ============================================================ */}
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
+            {/* Mobile Handle */}
+            <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
+
+            <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold">
                   <Users size={16} />
                 </div>
-                <h3 className="font-bold text-base">Invite Team Members</h3>
+                <h3 className="font-bold text-sm sm:text-base">Invite Team Members</h3>
               </div>
               <button 
                 onClick={() => setInviteModalOpen(false)} 
@@ -1134,16 +1147,16 @@ export default function ManagerDashboard({
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
               <p className="text-xs text-slate-600 leading-relaxed">
                 Employees can join your team immediately during registration. Share your manager email with them:
               </p>
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                   Your Manager Email:
                 </span>
-                <div className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-lg">
+                <div className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-lg gap-2">
                   <span className="text-xs font-mono font-bold text-slate-800 truncate">
                     {managerProfile?.email || 'davids@...'}
                   </span>
@@ -1167,22 +1180,22 @@ export default function ManagerDashboard({
                 </div>
               </div>
 
-              <div className="space-y-2.5 pt-2">
-                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
                   Instructions for Employees:
                 </span>
-                <ol className="text-xs text-slate-600 space-y-2 list-decimal list-inside bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
-                  <li>Navigate to the application sign-up page.</li>
+                <ol className="text-xs text-slate-600 space-y-1.5 list-decimal list-inside bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                  <li>Go to the sign-up page.</li>
                   <li>Select the <strong>Employee</strong> role.</li>
                   <li>Choose <strong>{managerProfile?.full_name || 'your name'}</strong> from the manager dropdown.</li>
-                  <li>Complete registration and start setting 60-second goals!</li>
+                  <li>Start setting 60-second goals!</li>
                 </ol>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex justify-end">
+              <div className="pt-2 border-t border-slate-100 flex justify-end pb-safe">
                 <Button 
                   onClick={() => setInviteModalOpen(false)}
-                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs"
+                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs w-full sm:w-auto"
                 >
                   Got It
                 </Button>
