@@ -183,6 +183,30 @@ export async function resendVerificationAction(formData: FormData) {
   }
 }
 
+export async function switchUserRoleAction(newRole: 'managing_director' | 'manager' | 'employee') {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', user.id)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/', 'layout')
+    return { success: true }
+  } catch (err) {
+    console.error('Switch role error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to update role.' }
+  }
+}
+
 export async function logoutAction() {
   try {
     const supabase = await createClient()

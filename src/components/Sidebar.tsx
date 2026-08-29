@@ -12,9 +12,10 @@ import {
   Menu,
   X,
   Sparkles,
-  User
+  User,
+  ShieldCheck
 } from 'lucide-react'
-import { logoutAction } from '@/app/auth/actions'
+import { logoutAction, switchUserRoleAction } from '@/app/auth/actions'
 
 interface SidebarProps {
   profile: {
@@ -47,6 +48,20 @@ export default function Sidebar({ profile }: SidebarProps) {
     : profile.role === 'manager'
     ? managerLinks
     : employeeLinks
+
+  const [switchingRole, setSwitchingRole] = useState(false)
+
+  async function handleToggleRole() {
+    setSwitchingRole(true)
+    const targetRole = profile.role === 'managing_director' ? 'manager' : 'managing_director'
+    const res = await switchUserRoleAction(targetRole)
+    if (res.success) {
+      window.location.replace('/dashboard')
+    } else {
+      alert(res.error || 'Failed to switch role.')
+      setSwitchingRole(false)
+    }
+  }
 
   async function handleSignOut() {
     await logoutAction()
@@ -150,6 +165,24 @@ export default function Sidebar({ profile }: SidebarProps) {
                 <span className="text-[10px] text-slate-400 truncate max-w-[110px]">{profile.email}</span>
               </div>
             </div>
+
+            {profile.role !== 'employee' && (
+              <button
+                type="button"
+                onClick={handleToggleRole}
+                disabled={switchingRole}
+                className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[10px] font-bold transition cursor-pointer"
+              >
+                <ShieldCheck size={12} />
+                <span>
+                  {switchingRole
+                    ? 'Updating role...'
+                    : profile.role === 'managing_director'
+                    ? 'Switch to Manager View'
+                    : '⚡ Upgrade to Managing Director'}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Navigation Links */}
@@ -335,6 +368,24 @@ export default function Sidebar({ profile }: SidebarProps) {
                 </div>
               </div>
             </div>
+
+            {profile.role !== 'employee' && (
+              <button
+                type="button"
+                onClick={handleToggleRole}
+                disabled={switchingRole}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[10px] font-bold transition cursor-pointer"
+              >
+                <ShieldCheck size={12} />
+                <span>
+                  {switchingRole
+                    ? 'Updating role...'
+                    : profile.role === 'managing_director'
+                    ? 'Switch to Manager View'
+                    : '⚡ Upgrade to Managing Director'}
+                </span>
+              </button>
+            )}
 
             <button
               type="button"
