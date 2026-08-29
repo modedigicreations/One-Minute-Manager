@@ -5,7 +5,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Never intercept these paths
-  const bypass = ['/api/', '/_next/', '/favicon', '/login', '/auth/']
+  const bypass = ['/api/', '/_next/', '/favicon', '/login', '/auth/', '/update-password']
   if (pathname === '/' || bypass.some((p) => pathname.startsWith(p))) {
     return NextResponse.next({ request })
   }
