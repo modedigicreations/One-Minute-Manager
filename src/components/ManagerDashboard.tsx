@@ -34,6 +34,7 @@ import {
   completeGoalAction 
 } from '@/app/dashboard/goals/actions'
 import { createFeedbackAction, deleteFeedbackAction } from '@/app/dashboard/feedback/actions'
+import { updateLagStatusAction } from '@/app/dashboard/director/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
 
 interface Employee {
@@ -82,6 +83,13 @@ interface ManagerDashboardProps {
     totalPraises?: number
     totalCorrections?: number
   }
+  lagFlags?: Array<{
+    id: string
+    flag_type: string
+    directive: string
+    status: 'open' | 'acknowledged' | 'resolved'
+    created_at: string
+  }>
 }
 
 export default function ManagerDashboard({ 
@@ -89,8 +97,11 @@ export default function ManagerDashboard({
   employees, 
   goals, 
   feedbacks, 
-  stats 
+  stats,
+  lagFlags = []
 }: ManagerDashboardProps) {
+  const openLagFlags = lagFlags.filter(f => f.status !== 'resolved')
+
   // Modal states
   const [goalModalOpen, setGoalModalOpen] = useState(false)
   const [editGoalModalOpen, setEditGoalModalOpen] = useState(false)
@@ -309,6 +320,68 @@ export default function ManagerDashboard({
           </Button>
         </div>
       </div>
+
+      {/* ============================================================ */}
+      {/* 1.5. MANAGING DIRECTOR DIRECTIVE ALERTS */}
+      {/* ============================================================ */}
+      {openLagFlags.length > 0 && (
+        <div className="space-y-3">
+          {openLagFlags.map((flag) => (
+            <div
+              key={flag.id}
+              className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 text-white border-2 border-amber-500/60 shadow-lg shadow-amber-950/20 relative overflow-hidden"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 font-mono">
+                      Executive Directive from Managing Director
+                    </span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                      flag.status === 'acknowledged' ? 'bg-amber-400/20 text-amber-300' : 'bg-rose-500/30 text-rose-300'
+                    }`}>
+                      {flag.status === 'acknowledged' ? 'In Progress' : 'Action Required'}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium text-slate-200 italic leading-relaxed">
+                    &ldquo;{flag.directive}&rdquo;
+                  </p>
+                  <span className="text-[10px] text-slate-400 block">
+                    Issued: <ClientFeedbackTime isoString={flag.created_at} />
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-2 sm:pt-0">
+                  {flag.status === 'open' && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await updateLagStatusAction(flag.id, 'acknowledged')
+                        window.location.reload()
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition cursor-pointer shadow-sm"
+                    >
+                      Acknowledge
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await updateLagStatusAction(flag.id, 'resolved')
+                      window.location.reload()
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer shadow-sm flex items-center gap-1"
+                  >
+                    <Check size={13} />
+                    <span>Mark Resolved</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ============================================================ */}
       {/* 2. EXECUTIVE METRICS ROW */}

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id           UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email        TEXT NOT NULL UNIQUE,
   full_name    TEXT,
-  role         TEXT NOT NULL DEFAULT 'employee' CHECK (role IN ('manager', 'employee')),
+  role         TEXT NOT NULL DEFAULT 'employee' CHECK (role IN ('managing_director', 'manager', 'employee')),
   manager_id   UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   avatar_url   TEXT,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -75,6 +75,22 @@ CREATE TABLE IF NOT EXISTS public.feedbacks (
 );
 
 -- ============================================================
+-- LAG_FLAGS (Managing Director Directives to Managers)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.lag_flags (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  director_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  manager_id      UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  employee_id     UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  goal_id         UUID REFERENCES public.goals(id) ON DELETE SET NULL,
+  flag_type       TEXT NOT NULL DEFAULT 'custom' CHECK (flag_type IN ('behind_goal', 'stale_feedback', 'performance_lag', 'custom')),
+  directive       TEXT NOT NULL,
+  status          TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'acknowledged', 'resolved')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at     TIMESTAMPTZ
+);
+
+-- ============================================================
 -- UPDATED_AT TRIGGERS
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.set_updated_at()
@@ -100,6 +116,7 @@ CREATE TRIGGER goals_updated_at
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedbacks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lag_flags ENABLE ROW LEVEL SECURITY;
 
 -- 1. Profiles Policies
 CREATE POLICY "profiles_select_all" ON public.profiles
@@ -110,49 +127,70 @@ CREATE POLICY "profiles_update_own" ON public.profiles
 
 -- 2. Goals Policies
 CREATE POLICY "goals_select_related" ON public.goals
-  FOR SELECT USING (auth.uid() = manager_id OR auth.uid() = employee_id);
+  FOR SELECT USING (
+    auth.uid() = manager_id OR 
+    auth.uid() = employee_id OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
+  );
 
 CREATE POLICY "goals_insert_manager" ON public.goals
   FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'manager'
+      WHERE id = auth.uid() AND role IN ('manager', 'managing_director')
     )
   );
 
 CREATE POLICY "goals_update_related" ON public.goals
-  FOR UPDATE USING (auth.uid() = manager_id OR auth.uid() = employee_id);
+  FOR UPDATE USING (
+    auth.uid() = manager_id OR 
+    auth.uid() = employee_id OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
+  );
 
 -- 3. Feedbacks Policies
 CREATE POLICY "feedbacks_select_related" ON public.feedbacks
-  FOR SELECT USING (auth.uid() = manager_id OR auth.uid() = employee_id);
+  FOR SELECT USING (
+    auth.uid() = manager_id OR 
+    auth.uid() = employee_id OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
+  );
 
 CREATE POLICY "feedbacks_insert_manager" ON public.feedbacks
   FOR INSERT WITH CHECK (
-    auth.uid() = manager_id AND
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'manager'
-    )
+    (auth.uid() = manager_id AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'manager')) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
   );
 
 -- 4. Delete Policies
 CREATE POLICY "goals_delete_manager" ON public.goals
   FOR DELETE USING (
-    auth.uid() = manager_id AND
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'manager'
-    )
+    (auth.uid() = manager_id AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'manager')) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
   );
 
 CREATE POLICY "feedbacks_delete_manager" ON public.feedbacks
   FOR DELETE USING (
-    auth.uid() = manager_id AND
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'manager'
-    )
+    (auth.uid() = manager_id AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'manager')) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
+  );
+
+-- 5. Lag Flags Policies
+CREATE POLICY "lag_flags_select_parties" ON public.lag_flags
+  FOR SELECT USING (
+    auth.uid() = director_id OR 
+    auth.uid() = manager_id OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
+  );
+
+CREATE POLICY "lag_flags_insert_director" ON public.lag_flags
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director')
+  );
+
+CREATE POLICY "lag_flags_update_parties" ON public.lag_flags
+  FOR UPDATE USING (
+    auth.uid() = director_id OR auth.uid() = manager_id
   );
 
 -- ============================================================
@@ -165,3 +203,6 @@ CREATE INDEX IF NOT EXISTS idx_goals_employee_id ON public.goals(employee_id);
 CREATE INDEX IF NOT EXISTS idx_goals_status ON public.goals(status);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_employee_id ON public.feedbacks(employee_id);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_type ON public.feedbacks(type);
+CREATE INDEX IF NOT EXISTS idx_lag_flags_manager_id ON public.lag_flags(manager_id);
+CREATE INDEX IF NOT EXISTS idx_lag_flags_director_id ON public.lag_flags(director_id);
+CREATE INDEX IF NOT EXISTS idx_lag_flags_status ON public.lag_flags(status);

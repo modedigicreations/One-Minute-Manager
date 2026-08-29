@@ -19,21 +19,33 @@ export default async function TeamPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'manager') {
-    redirect('/dashboard') // Employees shouldn't access the team page
+  if (!profile || (profile.role !== 'manager' && profile.role !== 'managing_director')) {
+    redirect('/dashboard') // Employees shouldn't access the team roster
   }
 
+  const isDirector = profile.role === 'managing_director'
+
   // Fetch employees
-  const { data: employees } = await supabase
+  const employeesQuery = supabase
     .from('profiles')
     .select('id, full_name, email, avatar_url')
-    .eq('manager_id', user.id)
+
+  if (!isDirector) {
+    employeesQuery.eq('manager_id', user.id)
+  } else {
+    employeesQuery.eq('role', 'employee')
+  }
+  const { data: employees } = await employeesQuery
 
   // Fetch goals
-  const { data: goals } = await supabase
+  const goalsQuery = supabase
     .from('goals')
     .select('id, objective, expected_result, deadline, progress, status, employee_id')
-    .eq('manager_id', user.id)
+
+  if (!isDirector) {
+    goalsQuery.eq('manager_id', user.id)
+  }
+  const { data: goals } = await goalsQuery
 
   // Standard current date string (YYYY-MM-DD) for timezone-neutral overdue comparison
   const now = new Date()
@@ -52,11 +64,15 @@ export default async function TeamPage() {
   })
 
   // Fetch feedbacks
-  const { data: feedbacks } = await supabase
+  const feedbacksQuery = supabase
     .from('feedbacks')
     .select('id, type, message, created_at, employee_id')
-    .eq('manager_id', user.id)
     .order('created_at', { ascending: false })
+
+  if (!isDirector) {
+    feedbacksQuery.eq('manager_id', user.id)
+  }
+  const { data: feedbacks } = await feedbacksQuery
 
   return (
     <TeamClient

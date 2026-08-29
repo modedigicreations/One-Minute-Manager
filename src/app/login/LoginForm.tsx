@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Loader2, Award, Briefcase, User, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Award, Briefcase, User, ArrowLeft, ShieldCheck } from 'lucide-react'
 import { 
   loginAction, 
   signupAction, 
@@ -28,7 +28,7 @@ export default function LoginForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Signup-specific state
-  const [role, setRole] = useState<'manager' | 'employee'>('employee')
+  const [role, setRole] = useState<'manager' | 'employee' | 'managing_director'>('employee')
   const [managers, setManagers] = useState<ManagerOption[]>([])
   const [loadingManagers, setLoadingManagers] = useState(false)
 
@@ -171,8 +171,8 @@ export default function LoginForm() {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               What is your role?
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={`flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer text-sm font-semibold transition ${role === 'employee' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <label className={`flex items-center justify-center gap-1.5 p-2.5 border rounded-xl cursor-pointer text-xs font-semibold transition ${role === 'employee' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
                 <input
                   type="radio"
                   name="role"
@@ -181,10 +181,10 @@ export default function LoginForm() {
                   onChange={() => setRole('employee')}
                   className="sr-only"
                 />
-                <User size={16} />
+                <User size={14} />
                 Employee
               </label>
-              <label className={`flex items-center justify-center gap-2 p-3 border rounded-xl cursor-pointer text-sm font-semibold transition ${role === 'manager' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+              <label className={`flex items-center justify-center gap-1.5 p-2.5 border rounded-xl cursor-pointer text-xs font-semibold transition ${role === 'manager' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
                 <input
                   type="radio"
                   name="role"
@@ -193,8 +193,20 @@ export default function LoginForm() {
                   onChange={() => setRole('manager')}
                   className="sr-only"
                 />
-                <Briefcase size={16} />
+                <Briefcase size={14} />
                 Manager
+              </label>
+              <label className={`flex items-center justify-center gap-1.5 p-2.5 border rounded-xl cursor-pointer text-xs font-semibold transition ${role === 'managing_director' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                <input
+                  type="radio"
+                  name="role"
+                  value="managing_director"
+                  checked={role === 'managing_director'}
+                  onChange={() => setRole('managing_director')}
+                  className="sr-only"
+                />
+                <ShieldCheck size={14} />
+                Managing Director
               </label>
             </div>
           </div>

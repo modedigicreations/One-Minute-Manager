@@ -20,13 +20,18 @@ interface SidebarProps {
   profile: {
     full_name: string | null
     email: string
-    role: 'manager' | 'employee'
+    role: 'manager' | 'employee' | 'managing_director'
   }
 }
 
 export default function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+
+  const directorLinks = [
+    { href: '/dashboard', label: 'Executive Cockpit', icon: LayoutDashboard },
+    { href: '/dashboard/team', label: 'All Teams', icon: Users },
+  ]
 
   const managerLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,7 +42,11 @@ export default function Sidebar({ profile }: SidebarProps) {
     { href: '/dashboard', label: 'My Focus', icon: CheckSquare },
   ]
 
-  const links = profile.role === 'manager' ? managerLinks : employeeLinks
+  const links = profile.role === 'managing_director'
+    ? directorLinks
+    : profile.role === 'manager'
+    ? managerLinks
+    : employeeLinks
 
   async function handleSignOut() {
     await logoutAction()
@@ -125,9 +134,19 @@ export default function Sidebar({ profile }: SidebarProps) {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-white truncate">{profile.full_name || 'User'}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
-                  {profile.role}
-                </span>
+                {profile.role === 'managing_director' ? (
+                  <span className="inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-amber-400/40 bg-amber-950/40 text-amber-300">
+                    Managing Director
+                  </span>
+                ) : profile.role === 'manager' ? (
+                  <span className="inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-indigo-500/30 bg-indigo-950/40 text-indigo-400">
+                    Manager
+                  </span>
+                ) : (
+                  <span className="inline-flex px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
+                    Employee
+                  </span>
+                )}
                 <span className="text-[10px] text-slate-400 truncate max-w-[110px]">{profile.email}</span>
               </div>
             </div>
@@ -299,9 +318,19 @@ export default function Sidebar({ profile }: SidebarProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-slate-200 truncate leading-tight">{profile.full_name || 'User'}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
-                    {profile.role}
-                  </span>
+                  {profile.role === 'managing_director' ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-amber-400/40 bg-amber-950/40 text-amber-300">
+                      Managing Director
+                    </span>
+                  ) : profile.role === 'manager' ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-indigo-500/30 bg-indigo-950/40 text-indigo-400">
+                      Manager
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase border border-emerald-500/30 bg-emerald-950/40 text-emerald-400">
+                      Employee
+                    </span>
+                  )}
                   <span className="text-[10px] text-slate-500 truncate max-w-[90px]">{profile.email}</span>
                 </div>
               </div>

@@ -42,7 +42,7 @@ export default async function DashboardLayout({
       <Sidebar profile={{
         full_name: profile.full_name,
         email: profile.email,
-        role: profile.role as 'manager' | 'employee'
+        role: profile.role as 'manager' | 'employee' | 'managing_director'
       }} />
 
       {/* Main content viewport */}
