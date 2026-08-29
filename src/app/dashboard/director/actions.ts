@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { sendNotificationInternal } from '@/app/dashboard/notifications/actions'
 
 export async function flagLagAction(formData: FormData) {
   try {
@@ -48,6 +49,15 @@ export async function flagLagAction(formData: FormData) {
       return { success: false, error: error.message }
     }
 
+    // Dispatch notification to the target manager
+    await sendNotificationInternal({
+      userId: manager_id,
+      title: '🚨 Directive from Managing Director',
+      message: directive,
+      link: '/dashboard',
+      type: 'directive',
+    })
+
     revalidatePath('/dashboard')
     return { success: true }
   } catch (err) {
@@ -77,6 +87,25 @@ export async function updateLagStatusAction(flagId: string, status: 'acknowledge
 
     if (error) {
       return { success: false, error: error.message }
+    }
+
+    // If resolved, notify the Managing Director
+    if (status === 'resolved') {
+      const { data: flag } = await supabase
+        .from('lag_flags')
+        .select('director_id, directive')
+        .eq('id', flagId)
+        .single()
+
+      if (flag?.director_id) {
+        await sendNotificationInternal({
+          userId: flag.director_id,
+          title: '✅ Directive Resolved by Manager',
+          message: `Directive marked resolved: "${flag.directive.substring(0, 60)}..."`,
+          link: '/dashboard',
+          type: 'directive',
+        })
+      }
     }
 
     revalidatePath('/dashboard')

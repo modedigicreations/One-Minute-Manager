@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { sendNotificationInternal } from '@/app/dashboard/notifications/actions'
 
 export async function createFeedbackAction(formData: FormData) {
   try {
@@ -36,6 +37,15 @@ export async function createFeedbackAction(formData: FormData) {
     if (error) {
       return { success: false, error: error.message }
     }
+
+    // Notify employee of praise or adjustment
+    await sendNotificationInternal({
+      userId: employee_id,
+      title: type === 'praising' ? '🏆 New One-Minute Praise Received!' : '🧭 New One-Minute Re-Direct Delivered',
+      message: `"${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"`,
+      link: '/dashboard',
+      type: 'feedback',
+    })
 
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/team')

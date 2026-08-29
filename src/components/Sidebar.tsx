@@ -16,6 +16,7 @@ import {
   ShieldCheck
 } from 'lucide-react'
 import { logoutAction, switchUserRoleAction } from '@/app/auth/actions'
+import NotificationBell from '@/components/NotificationBell'
 
 interface SidebarProps {
   profile: {
@@ -89,6 +90,7 @@ export default function Sidebar({ profile }: SidebarProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <button 
             type="button"
             onClick={() => setIsOpen(true)}
@@ -296,6 +298,7 @@ export default function Sidebar({ profile }: SidebarProps) {
                 <span className="text-xs text-slate-400 font-medium block -mt-0.5">Manager Platform</span>
               </div>
             </div>
+            <NotificationBell />
           </div>
 
           {/* Navigation Section */}

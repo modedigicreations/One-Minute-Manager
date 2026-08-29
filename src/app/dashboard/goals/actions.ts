@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { sendNotificationInternal } from '@/app/dashboard/notifications/actions'
 
 // Status helper using lexicographical YYYY-MM-DD date string comparison to avoid timezone offset bugs
 function determineStatus(progress: number, deadlineStr: string): 'not_started' | 'in_progress' | 'completed' | 'behind' {
@@ -59,6 +60,15 @@ export async function createGoalAction(formData: FormData) {
     if (error) {
       return { success: false, error: error.message }
     }
+
+    // Notify employee of newly assigned goal
+    await sendNotificationInternal({
+      userId: employee_id,
+      title: '🎯 New One-Minute Goal Assigned',
+      message: `Target: "${objective}" (Due: ${deadline})`,
+      link: '/dashboard',
+      type: 'goal_assigned',
+    })
 
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/team')
@@ -133,6 +143,23 @@ export async function completeGoalAction(goalId: string) {
       return { success: false, error: error.message }
     }
 
+    // Fetch goal details to notify manager
+    const { data: g } = await supabase
+      .from('goals')
+      .select('manager_id, objective')
+      .eq('id', goalId)
+      .single()
+
+    if (g) {
+      await sendNotificationInternal({
+        userId: g.manager_id,
+        title: '🎉 Goal Milestone Achieved (100%)',
+        message: `Goal completed: "${g.objective}"`,
+        link: '/dashboard',
+        type: 'goal_completed',
+      })
+    }
+
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/team')
     return { success: true }
@@ -187,6 +214,25 @@ export async function updateGoalProgressAction(goalId: string, progress: number,
 
     if (error) {
       return { success: false, error: error.message }
+    }
+
+    // If progress reached 100%, dispatch completion notification
+    if (progress >= 100) {
+      const { data: g } = await supabase
+        .from('goals')
+        .select('manager_id, objective')
+        .eq('id', goalId)
+        .single()
+
+      if (g) {
+        await sendNotificationInternal({
+          userId: g.manager_id,
+          title: '🎉 Goal Milestone Achieved (100%)',
+          message: `Goal completed: "${g.objective}"`,
+          link: '/dashboard',
+          type: 'goal_completed',
+        })
+      }
     }
 
     revalidatePath('/dashboard')
