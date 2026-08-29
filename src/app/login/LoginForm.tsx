@@ -12,8 +12,9 @@ import {
 
 interface ManagerOption {
   id: string
-  full_name: string
+  full_name: string | null
   email: string
+  role?: string
 }
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'resend'
@@ -32,21 +33,36 @@ export default function LoginForm() {
   const [managers, setManagers] = useState<ManagerOption[]>([])
   const [loadingManagers, setLoadingManagers] = useState(false)
 
+  async function handleRefreshManagers() {
+    setLoadingManagers(true)
+    try {
+      const res = await fetch('/api/auth/managers', { cache: 'no-store' })
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setManagers(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch managers:', err)
+    } finally {
+      setLoadingManagers(false)
+    }
+  }
+
   // Fetch managers when entering signup mode
   useEffect(() => {
+    let active = true
     if (mode === 'signup' && role === 'employee') {
-      Promise.resolve().then(() => {
-        setLoadingManagers(true)
-      })
-      fetch('/api/auth/managers')
+      fetch('/api/auth/managers', { cache: 'no-store' })
         .then((res) => res.json())
         .then((data) => {
-          if (Array.isArray(data)) {
+          if (active && Array.isArray(data)) {
             setManagers(data)
           }
         })
         .catch((err) => console.error('Failed to fetch managers:', err))
-        .finally(() => setLoadingManagers(false))
+    }
+    return () => {
+      active = false
     }
   }, [mode, role])
 
@@ -214,9 +230,19 @@ export default function LoginForm() {
           {/* Manager Dropdown (for employees only) */}
           {role === 'employee' && (
             <div>
-              <label htmlFor="manager_id" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                Select your manager {loadingManagers && '(loading...)'}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="manager_id" className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Select your manager
+                </label>
+                <button
+                  type="button"
+                  onClick={handleRefreshManagers}
+                  disabled={loadingManagers}
+                  className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer flex items-center gap-1"
+                >
+                  {loadingManagers ? 'Loading...' : '↻ Refresh list'}
+                </button>
+              </div>
               <select
                 id="manager_id"
                 name="manager_id"
@@ -224,16 +250,27 @@ export default function LoginForm() {
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white transition"
               >
                 <option value="">-- Choose your manager --</option>
-                {managers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.full_name} ({m.email})
-                  </option>
-                ))}
+                {managers.map((m) => {
+                  const displayName = m.full_name?.trim() || m.email.split('@')[0]
+                  const roleLabel = m.role === 'managing_director' ? 'Managing Director' : 'Manager'
+                  return (
+                    <option key={m.id} value={m.id}>
+                      {displayName} — {roleLabel} ({m.email})
+                    </option>
+                  )
+                })}
               </select>
               {managers.length === 0 && !loadingManagers && (
-                <p className="text-[10px] text-amber-600 mt-1">
-                  No managers registered yet. If you are the first team member, please sign up as a Manager first.
-                </p>
+                <div className="mt-1.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-800 flex items-center justify-between gap-2">
+                  <span>No managers found.</span>
+                  <button
+                    type="button"
+                    onClick={handleRefreshManagers}
+                    className="font-bold underline hover:text-amber-950 transition cursor-pointer shrink-0"
+                  >
+                    ↻ Try reloading
+                  </button>
+                </div>
               )}
             </div>
           )}
