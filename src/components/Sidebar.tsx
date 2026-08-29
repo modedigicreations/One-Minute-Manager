@@ -90,7 +90,7 @@ export default function Sidebar({ profile }: SidebarProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <NotificationBell />
+          <NotificationBell align="header" />
           <button 
             type="button"
             onClick={() => setIsOpen(true)}
@@ -298,7 +298,7 @@ export default function Sidebar({ profile }: SidebarProps) {
                 <span className="text-xs text-slate-400 font-medium block -mt-0.5">Manager Platform</span>
               </div>
             </div>
-            <NotificationBell />
+            <NotificationBell align="sidebar" />
           </div>
 
           {/* Navigation Section */}

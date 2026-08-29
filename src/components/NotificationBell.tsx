@@ -40,7 +40,11 @@ function getServerPermissionSnapshot(): NotificationPermission {
   return 'default'
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  align?: 'auto' | 'sidebar' | 'header'
+}
+
+export default function NotificationBell({ align = 'auto' }: NotificationBellProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
@@ -182,7 +186,11 @@ export default function NotificationBell() {
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white border border-slate-200 shadow-2xl z-50 overflow-hidden text-slate-900 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className={`absolute z-50 overflow-hidden text-slate-900 rounded-2xl bg-white border border-slate-200/90 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150 ${
+          align === 'sidebar'
+            ? 'right-0 mt-2 lg:right-auto lg:left-full lg:top-0 lg:mt-0 lg:ml-4 w-[calc(100vw-2rem)] sm:w-96'
+            : 'right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96'
+        }`}>
           {/* Header */}
           <div className="p-3.5 sm:p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2">
