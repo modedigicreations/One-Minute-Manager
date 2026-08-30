@@ -5,8 +5,6 @@ import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { 
-  ShieldCheck, 
-  AlertTriangle, 
   Send, 
   CheckCircle2, 
   Briefcase, 
@@ -14,7 +12,12 @@ import {
   X, 
   Flag,
   Check,
-  UserCheck
+  UserCheck,
+  Sparkles,
+  Clock,
+  ChevronRight,
+  Users,
+  Award
 } from 'lucide-react'
 import { flagLagAction, updateLagStatusAction } from '@/app/dashboard/director/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
@@ -90,7 +93,6 @@ export default function ManagingDirectorDashboard({
   
   // Search state
   const [managerSearch, setManagerSearch] = useState('')
-  const [lagSearch, setLagSearch] = useState('')
 
   // Submitting state
   const [submitting, setSubmitting] = useState(false)
@@ -113,19 +115,8 @@ export default function ManagingDirectorDashboard({
 
   // Filtered behind goals (Lag Radar)
   const behindGoals = useMemo(() => {
-    return allGoals.filter(g => {
-      if (g.status !== 'behind') return false
-      if (lagSearch.trim()) {
-        const query = lagSearch.toLowerCase()
-        return (
-          g.objective.toLowerCase().includes(query) ||
-          g.manager_name.toLowerCase().includes(query) ||
-          g.employee_name.toLowerCase().includes(query)
-        )
-      }
-      return true
-    })
-  }, [allGoals, lagSearch])
+    return allGoals.filter(g => g.status === 'behind')
+  }, [allGoals])
 
   // Filtered managers
   const filteredManagers = useMemo(() => {
@@ -178,34 +169,37 @@ export default function ManagingDirectorDashboard({
     }
   }
 
+  const currentHour = new Date().getHours()
+  const timeGreeting = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening'
+
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* ============================================================ */}
-      {/* 1. EXECUTIVE SUPER ADMIN COCKPIT HEADER */}
+      {/* 1. EXECUTIVE SUPER ADMIN COCKPIT HERO BANNER */}
       {/* ============================================================ */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white p-5 sm:p-7 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
-        <div className="space-y-1.5 z-10">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-gradient-to-r from-[#0038B8] via-[#0544D0] to-[#0A2680] text-white p-6 sm:p-8 rounded-[28px] border border-blue-900/30 shadow-xl shadow-blue-950/20 relative overflow-hidden">
+        <div className="space-y-2 z-10">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-amber-400/20 text-amber-300 border border-amber-400/30">
-              <ShieldCheck size={13} className="text-amber-400" />
-              Managing Director Oversight
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-white/95 backdrop-blur-md border border-white/20">
+              <Sparkles size={13} className="text-amber-300" />
+              AI Executive Suite
             </span>
-            <span className="text-xs font-mono text-slate-400">Executive Cockpit</span>
+            <span className="text-xs font-mono text-blue-200/80">Organization Governance</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            Welcome, {directorFirstName} 🏛️
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-1">
+            {timeGreeting}, {directorFirstName} 👋
           </h1>
-          <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+          <p className="text-white/85 text-xs sm:text-sm max-w-xl leading-relaxed">
             Monitor manager accountability, track company-wide performance health, and issue lag directives for rapid operational follow-up.
           </p>
         </div>
 
-        <div className="z-10 shrink-0 flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+        <div className="z-10 shrink-0 flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
           <Link
             href="/dashboard/assign"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs py-2.5 px-3.5 rounded-xl border border-white/20 transition cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm py-3 px-4 rounded-xl border border-white/25 backdrop-blur-sm transition cursor-pointer"
           >
-            <UserCheck size={14} className="text-emerald-400" />
+            <UserCheck size={15} />
             <span>Staff Allocations</span>
           </Link>
           <Button
@@ -215,9 +209,9 @@ export default function ManagingDirectorDashboard({
               setSelectedGoalId('')
               setDirectiveModalOpen(true)
             }}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs py-2.5 px-4 shadow-lg shadow-amber-500/20 border border-amber-400/40"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#EA2B42] hover:bg-[#D91B3A] text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-lg shadow-red-500/25 border-0 transition active:scale-95 cursor-pointer"
           >
-            <Flag size={14} className="fill-slate-950" />
+            <Flag size={15} />
             <span>Issue Lag Directive</span>
           </Button>
         </div>
@@ -228,97 +222,93 @@ export default function ManagingDirectorDashboard({
       {/* ============================================================ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {/* Card 1: Active Managers */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Active Managers
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{managers.length}</span>
-                <span className="text-xs font-semibold text-slate-500">leaders</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{managers.length}</span>
+                <span className="text-xs font-semibold text-slate-400">leaders</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+              <p className="text-[11px] text-slate-400 font-medium truncate">
                 {totalEmployees} direct reports
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-              <Briefcase size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 shrink-0">
+              <Users size={22} />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 2: Org Completion Rate */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
-                Company Target Rate
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+                Target Rate
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{companyCompletionRate}%</span>
-                <span className="text-xs font-bold text-emerald-600">({completedGoalsCount}/{totalGoalsCount})</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{companyCompletionRate}%</span>
+                <span className="text-xs font-bold text-purple-600">({completedGoalsCount}/{totalGoalsCount})</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+              <p className="text-[11px] text-slate-400 font-medium truncate">
                 {inProgressGoalsCount} in progress
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100/80 flex items-center justify-center text-purple-600 shrink-0">
+              <Award size={22} />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 3: Identified Lags */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-amber-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Operational Lags
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-2xl sm:text-3xl font-extrabold ${behindGoalsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                <span className={`text-2xl sm:text-3xl font-black ${behindGoalsCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
                   {behindGoalsCount}
                 </span>
                 {behindGoalsCount > 0 && (
-                  <span className="text-[9px] font-bold text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-200 uppercase">
+                  <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 uppercase">
                     Needs Action
                   </span>
                 )}
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+              <p className="text-[11px] text-slate-400 font-medium truncate">
                 Overdue performance targets
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
-              <AlertTriangle size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100/80 flex items-center justify-center text-amber-600 shrink-0">
+              <Clock size={22} />
             </div>
           </CardContent>
         </Card>
 
-        {/* Card 4: Open Directives */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
-                Active Directives
+        {/* Card 4: Feedback Shared */}
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+                Feedback Shared
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-2xl sm:text-3xl font-extrabold ${openDirectivesCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
-                  {openDirectivesCount}
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                  {totalPraises + totalCorrections}
                 </span>
-                <span className="text-xs font-bold text-slate-500">open</span>
+                <span className="text-xs font-semibold text-slate-400">events</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
-                {totalPraises} Praises / {totalCorrections} Adjustments
+              <p className="text-[11px] text-slate-400 font-medium truncate">
+                {totalPraises} Praises • {totalCorrections} Adjustments
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-              <Flag size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center text-emerald-600 shrink-0">
+              <CheckCircle2 size={22} />
             </div>
           </CardContent>
         </Card>
@@ -364,7 +354,7 @@ export default function ManagingDirectorDashboard({
                 <div key={mgr.id} className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 hover:bg-slate-50/60 transition">
                   {/* Left: Manager Identity */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#1D68FE] text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
                       {mgr.full_name ? mgr.full_name[0].toUpperCase() : 'M'}
                     </div>
                     <div className="min-w-0">
@@ -406,7 +396,7 @@ export default function ManagingDirectorDashboard({
                   <div className="flex items-center gap-2 pl-13 lg:pl-0">
                     <Link
                       href={`/dashboard/assign`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2.5 py-1.5 rounded-lg transition cursor-pointer h-8"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1.5 rounded-xl transition cursor-pointer h-8"
                     >
                       <UserCheck size={13} />
                       <span>Assign Staff</span>
@@ -415,7 +405,7 @@ export default function ManagingDirectorDashboard({
                       size="sm"
                       variant="secondary"
                       onClick={() => openQuickFlagModal(mgr.id, undefined, undefined, `Hi ${mgr.full_name || 'Manager'}, please review your team's overdue goals and follow up.`)}
-                      className="text-xs font-bold text-slate-700 hover:bg-slate-100 flex items-center gap-1.5 h-8"
+                      className="text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 px-3 py-1.5 rounded-xl flex items-center gap-1.5 h-8 cursor-pointer"
                     >
                       <Flag size={12} className="text-amber-600" />
                       <span>Issue Directive</span>
@@ -429,75 +419,57 @@ export default function ManagingDirectorDashboard({
       </Card>
 
       {/* ============================================================ */}
-      {/* 4. COMPANY-WIDE OPERATIONAL LAG RADAR */}
+      {/* 4. LOWER TWO-COLUMN SECTION (RECENT GOALS & NEEDS REVIEW) */}
       {/* ============================================================ */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
-        {/* Left: Operational Lag Radar */}
-        <Card className="border-rose-200/80 bg-rose-50/15">
-          <CardHeader className="p-4 sm:p-5 border-rose-100 pb-3">
+        {/* Left: Recent Goals & Activity */}
+        <Card className="border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardHeader className="p-4 sm:p-5 border-slate-100 pb-3 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-rose-800 text-sm sm:text-base">
-                <AlertTriangle size={17} />
-                <span>Operational Lag Radar</span>
+              <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+                Recent Goals & Activity
               </CardTitle>
-              <CardDescription className="text-rose-700/80 text-xs">
-                Goals across the organization that are past their deadline.
+              <CardDescription className="text-xs text-slate-400">
+                Company goals across all active reporting lines.
               </CardDescription>
             </div>
-            <div className="relative w-full sm:w-48 mt-2 sm:mt-0">
-              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-rose-400" />
-              <input
-                type="text"
-                value={lagSearch}
-                onChange={(e) => setLagSearch(e.target.value)}
-                placeholder="Filter lag..."
-                className="w-full pl-7 pr-2 py-1 text-xs bg-white border border-rose-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500"
-              />
-            </div>
+            <Link 
+              href="/dashboard/team" 
+              className="text-[#1D68FE] font-bold text-xs hover:underline flex items-center gap-0.5"
+            >
+              <span>View all</span>
+              <ChevronRight size={14} />
+            </Link>
           </CardHeader>
-          <CardContent className="p-0 divide-y divide-rose-100/70 max-h-96 overflow-y-auto">
-            {behindGoals.length === 0 ? (
-              <div className="p-6 text-center space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mx-auto">
-                  <CheckCircle2 size={20} />
-                </div>
-                <h5 className="font-bold text-xs text-slate-800">Zero Operational Lags</h5>
-                <p className="text-[11px] text-slate-400">All company goals are currently on schedule!</p>
+          <CardContent className="p-0 divide-y divide-slate-100/80 max-h-96 overflow-y-auto">
+            {allGoals.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400">
+                No goals registered in the company yet.
               </div>
             ) : (
-              behindGoals.map((goal) => (
-                <div key={goal.id} className="p-4 space-y-2 bg-white/70 hover:bg-white transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-0.5 min-w-0 flex-1">
-                      <h5 className="font-bold text-slate-900 text-xs sm:text-sm">{goal.objective}</h5>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap">
-                        <span>Employee: <strong className="text-slate-700">{goal.employee_name}</strong></span>
-                        <span>•</span>
-                        <span>Manager: <strong className="text-slate-700">{goal.manager_name}</strong></span>
-                      </div>
+              allGoals.slice(0, 5).map((goal) => (
+                <div key={goal.id} className="p-4 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <h5 className="font-bold text-slate-900 text-xs sm:text-sm truncate">{goal.objective}</h5>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400 flex-wrap">
+                      <span>{goal.employee_name}</span>
+                      <span>•</span>
+                      <span>Mgr: {goal.manager_name}</span>
+                      <span>•</span>
+                      <span>Due: {formatStaticDate(goal.deadline)}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200 shrink-0 uppercase">
-                      Behind
-                    </span>
                   </div>
-
-                  <div className="flex items-center justify-between gap-2 text-xs pt-1">
-                    <span className="text-[11px] text-slate-400 font-semibold">
-                      Due: {formatStaticDate(goal.deadline)} ({goal.progress}% done)
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      goal.status === 'completed' 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                        : goal.status === 'behind'
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                        : 'bg-[#0066FF] text-white'
+                    }`}>
+                      {goal.status === 'completed' ? 'Completed' : goal.status === 'behind' ? 'Behind' : 'In Progress'}
                     </span>
-                    <Button
-                      size="sm"
-                      onClick={() => openQuickFlagModal(
-                        goal.manager_id, 
-                        goal.employee_id, 
-                        goal.id, 
-                        `Operational Lag: Goal "${goal.objective}" assigned to ${goal.employee_name} is overdue. Please perform an immediate One-Minute Re-Direct.`
-                      )}
-                      className="text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white h-7 px-2.5 flex items-center gap-1 shadow-xs"
-                    >
-                      <Flag size={11} />
-                      <span>Flag to Manager</span>
-                    </Button>
+                    <ChevronRight size={14} className="text-slate-300" />
                   </div>
                 </div>
               ))
@@ -505,81 +477,68 @@ export default function ManagingDirectorDashboard({
           </CardContent>
         </Card>
 
-        {/* Right: Dispatched Directives Feed */}
-        <Card>
-          <CardHeader className="p-4 sm:p-5 pb-3">
+        {/* Right: Needs Review (Directives & Lags) */}
+        <Card className="border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardHeader className="p-4 sm:p-5 border-slate-100 pb-3 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                <Flag size={17} className="text-amber-600" />
-                <span>Executive Directives Feed</span>
+              <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+                Needs Review
               </CardTitle>
-              <CardDescription className="text-xs">
-                Track manager acknowledgements and resolutions.
+              <CardDescription className="text-xs text-slate-400">
+                Action items and open directives requiring attention.
               </CardDescription>
             </div>
-            <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-              {lagFlags.length} issued
+            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+              {behindGoals.length + openDirectivesCount} items
             </span>
           </CardHeader>
-          <CardContent className="p-0 divide-y divide-slate-100 max-h-96 overflow-y-auto">
-            {lagFlags.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400">
-                No directives have been issued yet. Use &ldquo;Issue Lag Directive&rdquo; above to nudge a manager.
+          <CardContent className="p-4 sm:p-6">
+            {behindGoals.length === 0 && openDirectivesCount === 0 ? (
+              <div className="py-12 text-center space-y-2.5">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-500 mx-auto shadow-xs">
+                  <Check size={22} strokeWidth={2.5} />
+                </div>
+                <p className="text-slate-400 text-sm font-medium">Nothing to review — all clear!</p>
               </div>
             ) : (
-              lagFlags.map((flag) => (
-                <div key={flag.id} className="p-4 space-y-2 hover:bg-slate-50/50 transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-0.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-xs text-slate-900">
-                          To: {flag.manager_name}
-                        </span>
-                        {flag.employee_name && (
-                          <span className="text-[11px] text-slate-400">
-                            (re: {flag.employee_name})
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-slate-400 block">
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {behindGoals.slice(0, 3).map((goal) => (
+                  <div key={goal.id} className="p-3.5 rounded-xl border border-rose-100 bg-rose-50/20 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-900 truncate">{goal.objective}</p>
+                      <p className="text-[11px] text-slate-400">{goal.employee_name} • Overdue</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => openQuickFlagModal(goal.manager_id, goal.employee_id, goal.id, `Operational Lag: Goal "${goal.objective}" is overdue.`)}
+                      className="text-[10px] font-bold bg-[#EA2B42] hover:bg-[#D91B3A] text-white h-7 px-2.5 rounded-lg border-0 cursor-pointer"
+                    >
+                      <Flag size={11} className="mr-1" />
+                      Flag
+                    </Button>
+                  </div>
+                ))}
+
+                {lagFlags.filter(f => f.status === 'open').map((flag) => (
+                  <div key={flag.id} className="p-3.5 rounded-xl border border-amber-100 bg-amber-50/20 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-900 truncate">Directive to {flag.manager_name}</p>
+                      <p className="text-[11px] text-amber-700 italic truncate">&ldquo;{flag.directive}&rdquo;</p>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">
                         <ClientFeedbackTime isoString={flag.created_at} />
                       </span>
                     </div>
-
-                    {/* Status Badge */}
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border shrink-0 ${
-                      flag.status === 'open' 
-                        ? 'bg-rose-50 text-rose-700 border-rose-200' 
-                        : flag.status === 'acknowledged'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    }`}>
-                      {flag.status === 'open' && 'Open'}
-                      {flag.status === 'acknowledged' && 'Acknowledged'}
-                      {flag.status === 'resolved' && 'Resolved'}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateFlagStatus(flag.id, 'resolved')}
+                      disabled={actionInProgress === flag.id}
+                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 px-2 py-1 bg-emerald-50 rounded-lg border border-emerald-200 cursor-pointer shrink-0"
+                    >
+                      Resolve
+                    </button>
                   </div>
-
-                  <p className="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100 italic leading-relaxed">
-                    &ldquo;{flag.directive}&rdquo;
-                  </p>
-
-                  {/* Actions for Director */}
-                  {flag.status !== 'resolved' && (
-                    <div className="flex justify-end pt-1">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateFlagStatus(flag.id, 'resolved')}
-                        disabled={actionInProgress === flag.id}
-                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 cursor-pointer"
-                      >
-                        <Check size={13} />
-                        <span>Mark as Resolved</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>

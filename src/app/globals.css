@@ -14,6 +14,13 @@
   --color-omm-danger:         #f43f5e;
   --color-omm-indigo:         #6366f1;
   --color-omm-cyan:           #06b6d4;
+  --color-omm-crimson:        #ea2b42;
+  --color-omm-crimson-hover:  #d91b3a;
+  --color-omm-cobalt-dark:    #0038b8;
+  --color-omm-cobalt:         #0544d0;
+  --color-omm-cobalt-deep:    #0a2680;
+  --color-omm-sidebar:        #0b111e;
+  --color-omm-blue-avatar:    #1d68fe;
 }
 
 @theme inline {

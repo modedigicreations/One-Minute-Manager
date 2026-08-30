@@ -266,56 +266,60 @@ export default function ManagerDashboard({
   const totalCorrections = stats.totalCorrections ?? feedbacks.filter(f => f.type === 'correction').length
   const completionRate = goals.length > 0 ? Math.round((stats.completed / goals.length) * 100) : 0
 
+  const currentHour = new Date().getHours()
+  const timeGreeting = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening'
+
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* ============================================================ */}
-      {/* 1. WELCOME & COMMAND HEADER */}
+      {/* 1. WELCOME & COMMAND HERO BANNER */}
       {/* ============================================================ */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/90 backdrop-blur-md p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
-        <div>
-          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 mb-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Welcome, {managerFirstName} 👋
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live Sync
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-gradient-to-r from-[#0038B8] via-[#0544D0] to-[#0A2680] text-white p-6 sm:p-8 rounded-[28px] border border-blue-900/30 shadow-xl shadow-blue-950/20 relative overflow-hidden">
+        <div className="space-y-2 z-10">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-white/95 backdrop-blur-md border border-white/20">
+              <Sparkles size={13} className="text-amber-300" />
+              Manager Focus Suite
             </span>
+            <span className="text-xs font-mono text-blue-200/80">Team Performance</span>
           </div>
-          <p className="text-slate-500 text-xs sm:text-sm max-w-2xl leading-relaxed">
-            Focus on clear expectations, immediate praising, and early adjustments.
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-1">
+            {timeGreeting}, {managerFirstName} 👋
+          </h1>
+          <p className="text-white/85 text-xs sm:text-sm max-w-xl leading-relaxed">
+            Focus on clear expectations, immediate praising, and early adjustments to empower your team.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto pt-1 md:pt-0">
+        <div className="z-10 shrink-0 flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
           <Button 
-            variant="secondary"
+            variant="ghost"
             onClick={() => setInviteModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 text-xs font-semibold py-2 h-10 sm:h-9"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 text-xs font-bold bg-white/15 hover:bg-white/25 text-white py-3 px-4 rounded-xl border border-white/25 backdrop-blur-sm cursor-pointer"
           >
-            <Users size={14} className="text-slate-500" />
+            <Users size={14} />
             <span>Invite Team</span>
           </Button>
 
           <Button 
-            variant="secondary"
+            variant="ghost"
             onClick={() => {
               setSelectedEmployeeId(employees[0]?.id || '')
               setFeedbackType('praising')
               setFeedbackModalOpen(true)
             }}
-            className="flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 border border-emerald-200/70 py-2 h-10 sm:h-9"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 text-xs font-bold bg-white/15 hover:bg-white/25 text-white py-3 px-4 rounded-xl border border-white/25 backdrop-blur-sm cursor-pointer"
           >
-            <Award size={14} className="text-emerald-600" />
+            <Award size={14} />
             <span>Log Feedback</span>
           </Button>
 
           <Button 
             onClick={() => setGoalModalOpen(true)} 
-            className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white py-2 h-10 sm:h-9 shadow-sm"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#EA2B42] hover:bg-[#D91B3A] text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-lg shadow-red-500/25 border-0 transition active:scale-95 cursor-pointer"
           >
-            <Plus size={14} />
+            <Plus size={15} />
             <span>Set One-Minute Goal</span>
           </Button>
         </div>
@@ -327,51 +331,48 @@ export default function ManagerDashboard({
       {openLagFlags.length > 0 && (
         <div className="space-y-3">
           {openLagFlags.map((flag) => (
-            <div
-              key={flag.id}
-              className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 text-white border-2 border-amber-500/60 shadow-lg shadow-amber-950/20 relative overflow-hidden"
+            <div 
+              key={flag.id} 
+              className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 text-amber-900 shadow-sm animate-in fade-in duration-300"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 font-mono">
-                      Executive Directive from Managing Director
-                    </span>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
-                      flag.status === 'acknowledged' ? 'bg-amber-400/20 text-amber-300' : 'bg-rose-500/30 text-rose-300'
-                    }`}>
-                      {flag.status === 'acknowledged' ? 'In Progress' : 'Action Required'}
-                    </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0 mt-0.5">
+                    <Zap size={16} />
                   </div>
-                  <p className="text-xs sm:text-sm font-medium text-slate-200 italic leading-relaxed">
-                    &ldquo;{flag.directive}&rdquo;
-                  </p>
-                  <span className="text-[10px] text-slate-400 block">
-                    Issued: <ClientFeedbackTime isoString={flag.created_at} />
-                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">
+                        Directive from Super Admin
+                      </span>
+                      <span className="text-xs text-amber-700">
+                        <ClientFeedbackTime isoString={flag.created_at} />
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-semibold text-amber-950 mt-1 italic leading-relaxed">
+                      &ldquo;{flag.directive}&rdquo;
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-2 sm:pt-0">
-                  {flag.status === 'open' && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await updateLagStatusAction(flag.id, 'acknowledged')
-                        window.location.reload()
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition cursor-pointer shadow-sm"
-                    >
-                      Acknowledge
-                    </button>
-                  )}
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await updateLagStatusAction(flag.id, 'acknowledged')
+                      window.location.reload()
+                    }}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 transition cursor-pointer"
+                  >
+                    Acknowledge
+                  </button>
                   <button
                     type="button"
                     onClick={async () => {
                       await updateLagStatusAction(flag.id, 'resolved')
                       window.location.reload()
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer shadow-sm flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition flex items-center gap-1 cursor-pointer"
                   >
                     <Check size={13} />
                     <span>Mark Resolved</span>
@@ -388,90 +389,86 @@ export default function ManagerDashboard({
       {/* ============================================================ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         {/* Card 1: Goals Completed */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Completed
               </span>
               <div className="flex items-baseline gap-1 sm:gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{stats.completed}</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{stats.completed}</span>
                 {goals.length > 0 && (
                   <span className="text-[10px] sm:text-xs font-bold text-emerald-600">({completionRate}%)</span>
                 )}
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">Achieved targets</p>
+              <p className="text-[11px] text-slate-400 font-medium truncate">Achieved targets</p>
             </div>
-            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50/80 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 size={18} className="sm:w-6 sm:h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center text-emerald-600 shrink-0">
+              <CheckCircle2 size={22} />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 2: In Progress */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 to-indigo-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 In Progress
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{stats.inProgress}</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{stats.inProgress}</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">Active focus</p>
+              <p className="text-[11px] text-slate-400 font-medium truncate">Active focus</p>
             </div>
-            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-sky-50/80 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
-              <Clock size={18} className="sm:w-6 sm:h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 shrink-0">
+              <Clock size={22} />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 3: Falling Behind */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-400 to-amber-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Behind
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-2xl sm:text-3xl font-extrabold ${stats.behind > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                <span className={`text-2xl sm:text-3xl font-black ${stats.behind > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
                   {stats.behind}
                 </span>
                 {stats.behind > 0 && (
-                  <span className="text-[8px] sm:text-[10px] font-bold text-rose-600 uppercase bg-rose-50 px-1 py-0.2 rounded border border-rose-200">
+                  <span className="text-[8px] sm:text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 uppercase">
                     Alert
                   </span>
                 )}
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">Re-Directs needed</p>
+              <p className="text-[11px] text-slate-400 font-medium truncate">Re-Directs needed</p>
             </div>
-            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-rose-50/80 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
-              <AlertTriangle size={18} className="sm:w-6 sm:h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100/80 flex items-center justify-center text-amber-600 shrink-0">
+              <AlertTriangle size={22} />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 4: Feedback Velocity */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-400 to-fuchsia-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Feedback
               </span>
               <div className="flex items-baseline gap-1 sm:gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{feedbacks.length}</span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-violet-700 bg-violet-50 px-1 py-0.2 rounded border border-violet-200">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{feedbacks.length}</span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-purple-700 bg-purple-50 px-1 py-0.2 rounded border border-purple-200">
                   {totalPraises}P/{totalCorrections}C
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">4:1 Target ratio</p>
+              <p className="text-[11px] text-slate-400 font-medium truncate">Total interactions</p>
             </div>
-            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-violet-50/80 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
-              <Award size={18} className="sm:w-6 sm:h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100/80 flex items-center justify-center text-purple-600 shrink-0">
+              <Award size={22} />
             </div>
           </CardContent>
         </Card>

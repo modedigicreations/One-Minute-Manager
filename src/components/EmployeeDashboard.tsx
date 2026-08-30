@@ -82,35 +82,39 @@ export default function EmployeeDashboard({
   const praiseCount = feedbacks.filter(f => f.type === 'praising').length
   const totalCompletionRate = goals.length > 0 ? Math.round((completedGoals.length / goals.length) * 100) : 0
 
+  const currentHour = new Date().getHours()
+  const timeGreeting = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening'
+
   return (
     <div className="space-y-6 sm:space-y-8 pb-12">
       {/* ============================================================ */}
-      {/* 1. WELCOME & FOCUS HEADER */}
+      {/* 1. WELCOME & FOCUS HERO BANNER */}
       {/* ============================================================ */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/90 backdrop-blur-md p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
-        <div>
-          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 mb-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
-              My Focus, {employeeFirstName} 🎯
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Active Member
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-gradient-to-r from-[#0038B8] via-[#0544D0] to-[#0A2680] text-white p-6 sm:p-8 rounded-[28px] border border-blue-900/30 shadow-xl shadow-blue-950/20 relative overflow-hidden">
+        <div className="space-y-2 z-10">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-white/95 backdrop-blur-md border border-white/20">
+              <Sparkles size={13} className="text-amber-300" />
+              Member Focus Suite
             </span>
+            <span className="text-xs font-mono text-blue-200/80">60-Second Goals</span>
           </div>
-          <p className="text-slate-500 text-xs sm:text-sm max-w-2xl leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-1">
+            {timeGreeting}, {employeeFirstName} 🎯
+          </h1>
+          <p className="text-white/85 text-xs sm:text-sm max-w-xl leading-relaxed">
             Review your 60-second performance targets, track self-progress, and view continuous manager praise.
           </p>
         </div>
 
         {managerInfo && (
-          <div className="flex items-center gap-2.5 p-2 px-3 rounded-xl bg-slate-50 border border-slate-200/80 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-bold shrink-0">
+          <div className="z-10 flex items-center gap-3 p-3 px-4 rounded-2xl bg-white/15 border border-white/20 backdrop-blur-md shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#1D68FE] text-white flex items-center justify-center text-sm font-bold shadow-xs shrink-0 border border-white/30">
               {managerInfo.full_name ? managerInfo.full_name[0].toUpperCase() : 'M'}
             </div>
             <div className="text-left min-w-0">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Manager</span>
-              <span className="text-xs font-bold text-slate-800 truncate block">{managerInfo.full_name || 'Manager'}</span>
+              <span className="text-[10px] font-bold text-blue-200 uppercase tracking-wider block">Assigned Manager</span>
+              <span className="text-xs sm:text-sm font-bold text-white truncate block">{managerInfo.full_name || 'Manager'}</span>
             </div>
           </div>
         )}
@@ -119,50 +123,47 @@ export default function EmployeeDashboard({
       {/* ============================================================ */}
       {/* 2. STATS ROW (3 Cards) */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-3 gap-2.5 sm:gap-4 lg:gap-5">
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 to-indigo-500" />
-          <CardContent className="p-3 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">Active</span>
-              <div className="text-xl sm:text-3xl font-extrabold text-slate-900">{activeGoals.length}</div>
-              <p className="text-[9px] sm:text-[11px] text-slate-400 font-medium hidden sm:block">In flight</p>
+      <div className="grid grid-cols-3 gap-3 sm:gap-5">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+            <div className="space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">Active</span>
+              <div className="text-2xl sm:text-3xl font-black text-slate-900">{activeGoals.length}</div>
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">In flight targets</p>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
-              <Clock size={16} className="sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 shrink-0">
+              <Clock size={20} />
             </div>
           </CardContent>
         </Card>
 
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
-          <CardContent className="p-3 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">Done</span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl sm:text-3xl font-extrabold text-slate-900">{completedGoals.length}</span>
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+            <div className="space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">Done</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{completedGoals.length}</span>
                 {goals.length > 0 && (
-                  <span className="text-[9px] sm:text-xs font-bold text-emerald-600 hidden sm:inline">({totalCompletionRate}%)</span>
+                  <span className="text-xs font-bold text-emerald-600 hidden sm:inline">({totalCompletionRate}%)</span>
                 )}
               </div>
-              <p className="text-[9px] sm:text-[11px] text-slate-400 font-medium hidden sm:block">Delivered</p>
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">Delivered goals</p>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 size={16} className="sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center text-emerald-600 shrink-0">
+              <CheckCircle2 size={20} />
             </div>
           </CardContent>
         </Card>
 
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-400 to-fuchsia-500" />
-          <CardContent className="p-3 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">Praise</span>
-              <div className="text-xl sm:text-3xl font-extrabold text-slate-900">{praiseCount}</div>
-              <p className="text-[9px] sm:text-[11px] text-slate-400 font-medium hidden sm:block">Recognition</p>
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+            <div className="space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">Praise</span>
+              <div className="text-2xl sm:text-3xl font-black text-slate-900">{praiseCount}</div>
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">Recognition events</p>
             </div>
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600 shrink-0">
-              <Award size={16} className="sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-purple-50 border border-purple-100/80 flex items-center justify-center text-purple-600 shrink-0">
+              <Award size={20} />
             </div>
           </CardContent>
         </Card>

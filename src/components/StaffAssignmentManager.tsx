@@ -317,21 +317,21 @@ CREATE POLICY "profiles_update_director" ON public.profiles FOR UPDATE USING (EX
   return (
     <div className="space-y-6 pb-20">
       {/* ============================================================ */}
-      {/* 1. EXECUTIVE COCKPIT HEADER */}
+      {/* 1. EXECUTIVE COCKPIT HERO BANNER */}
       {/* ============================================================ */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white p-5 sm:p-7 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
-        <div className="space-y-1.5 z-10">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-gradient-to-r from-[#0038B8] via-[#0544D0] to-[#0A2680] text-white p-6 sm:p-8 rounded-[28px] border border-blue-900/30 shadow-xl shadow-blue-950/20 relative overflow-hidden">
+        <div className="space-y-2 z-10">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-amber-400/20 text-amber-300 border border-amber-400/30">
-              <ShieldCheck size={13} className="text-amber-400" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/15 text-white/95 backdrop-blur-md border border-white/20">
+              <ShieldCheck size={13} className="text-amber-300" />
               Super Admin Feature
             </span>
-            <span className="text-xs font-mono text-slate-400">Organization Governance</span>
+            <span className="text-xs font-mono text-blue-200/80">Organization Governance</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-1">
             Staff Allocation & Assignments 👥
           </h1>
-          <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+          <p className="text-white/85 text-xs sm:text-sm max-w-2xl leading-relaxed">
             Assign or reassign any staff member to any manager based on their department or role. Execute individual assignments, filter by department, or allocate teams in bulk.
           </p>
         </div>
@@ -345,9 +345,9 @@ CREATE POLICY "profiles_update_director" ON public.profiles FOR UPDATE USING (EX
               setCriteriaNewDept('')
               setBulkModalOpen(true)
             }}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs py-2.5 px-4 shadow-lg shadow-amber-500/20 border border-amber-400/40 cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#EA2B42] hover:bg-[#D91B3A] text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-lg shadow-red-500/25 border-0 transition active:scale-95 cursor-pointer"
           >
-            <Sparkles size={14} className="fill-slate-950" />
+            <Sparkles size={15} />
             <span>Assign by Dept / Role</span>
           </Button>
         </div>
@@ -409,23 +409,22 @@ CREATE POLICY "profiles_update_director" ON public.profiles FOR UPDATE USING (EX
       {/* ============================================================ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {/* Card 1: Total Staff */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-700 to-slate-900" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Total Staff Members
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{totalCount}</span>
-                <span className="text-xs font-semibold text-slate-500">members</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{totalCount}</span>
+                <span className="text-xs font-semibold text-slate-400">members</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+              <p className="text-[11px] text-slate-400 font-medium truncate">
                 {staffList.filter(s => s.role === 'employee').length} employees, {staffList.filter(s => s.role === 'manager').length} managers
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
-              <Users size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 shrink-0">
+              <Users size={22} />
             </div>
           </CardContent>
         </Card>
@@ -434,26 +433,25 @@ CREATE POLICY "profiles_update_director" ON public.profiles FOR UPDATE USING (EX
         <Card 
           hover 
           onClick={() => setAssignmentFilter(assignmentFilter === 'assigned' ? 'all' : 'assigned')}
-          className={`relative overflow-hidden border-slate-200/80 cursor-pointer transition ${
-            assignmentFilter === 'assigned' ? 'ring-2 ring-emerald-500 shadow-md' : ''
+          className={`relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl cursor-pointer transition ${
+            assignmentFilter === 'assigned' ? 'ring-2 ring-purple-500 shadow-md' : ''
           }`}
         >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Assigned to Managers
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600">{assignedCount}</span>
+                <span className="text-2xl sm:text-3xl font-black text-purple-600">{assignedCount}</span>
                 <span className="text-xs font-bold text-slate-400">({totalCount > 0 ? Math.round((assignedCount / totalCount) * 100) : 0}%)</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+              <p className="text-[11px] text-slate-400 font-medium truncate">
                 Active reporting lines established
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <UserCheck size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100/80 flex items-center justify-center text-purple-600 shrink-0">
+              <UserCheck size={22} />
             </div>
           </CardContent>
         </Card>
@@ -462,54 +460,52 @@ CREATE POLICY "profiles_update_director" ON public.profiles FOR UPDATE USING (EX
         <Card 
           hover 
           onClick={() => setAssignmentFilter(assignmentFilter === 'unassigned' ? 'all' : 'unassigned')}
-          className={`relative overflow-hidden border-slate-200/80 cursor-pointer transition ${
+          className={`relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl cursor-pointer transition ${
             assignmentFilter === 'unassigned' ? 'ring-2 ring-amber-500 shadow-md' : ''
           }`}
         >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Unassigned Staff
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className={`text-2xl sm:text-3xl font-extrabold ${unassignedCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
+                <span className={`text-2xl sm:text-3xl font-black ${unassignedCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
                   {unassignedCount}
                 </span>
                 {unassignedCount > 0 && (
-                  <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded border border-amber-200 uppercase">
+                  <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 uppercase">
                     Needs Manager
                   </span>
                 )}
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+              <p className="text-[11px] text-slate-400 font-medium truncate">
                 {unassignedCount === 0 ? 'All staff assigned' : 'Click to filter unassigned'}
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-              <UserX size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100/80 flex items-center justify-center text-amber-600 shrink-0">
+              <UserX size={22} />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 4: Available Managers */}
-        <Card hover className="relative overflow-hidden border-slate-200/80">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
-          <CardContent className="p-3.5 sm:p-5 flex items-center justify-between">
-            <div className="space-y-0.5 sm:space-y-1">
-              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
+        <Card hover className="relative overflow-hidden border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+          <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
                 Available Managers
               </span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">{managers.length}</span>
-                <span className="text-xs font-semibold text-slate-500">leaders</span>
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">{managers.length}</span>
+                <span className="text-xs font-semibold text-slate-400">leaders</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
-                Across {allDepartments.length} active departments
+              <p className="text-[11px] text-slate-400 font-medium truncate">
+                Across {allDepartments.length} departments
               </p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-              <Briefcase size={20} />
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center text-emerald-600 shrink-0">
+              <Briefcase size={22} />
             </div>
           </CardContent>
         </Card>
