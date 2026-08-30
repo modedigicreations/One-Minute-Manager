@@ -65,18 +65,22 @@ export default async function StaffAssignPage() {
     }
   }
 
-  // Separate staff list and eligible managers
+  // Eligible managers who can receive staff assignments (Managers & Managing Director)
   const managersList = profilesList.filter(p => p.role === 'manager' || p.role === 'managing_director')
-  const staffList: StaffProfile[] = profilesList.map(p => ({
-    id: p.id,
-    full_name: p.full_name,
-    email: p.email,
-    role: p.role,
-    manager_id: p.manager_id,
-    department: p.department || 'General',
-    job_title: p.job_title || null,
-    avatar_url: p.avatar_url || null,
-  }))
+
+  // Staff roster eligible for assignment (Employees and Managers)
+  const staffList: StaffProfile[] = profilesList
+    .filter(p => p.role !== 'managing_director')
+    .map(p => ({
+      id: p.id,
+      full_name: p.full_name,
+      email: p.email,
+      role: p.role,
+      manager_id: p.manager_id,
+      department: p.department || 'General',
+      job_title: p.job_title || null,
+      avatar_url: p.avatar_url || null,
+    }))
 
   const managers: ManagerProfile[] = managersList.map(m => {
     const reportsCount = staffList.filter(s => s.manager_id === m.id).length
