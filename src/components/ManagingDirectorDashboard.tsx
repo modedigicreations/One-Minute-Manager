@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { 
@@ -12,7 +13,8 @@ import {
   Search, 
   X, 
   Flag,
-  Check
+  Check,
+  UserCheck
 } from 'lucide-react'
 import { flagLagAction, updateLagStatusAction } from '@/app/dashboard/director/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
@@ -198,7 +200,14 @@ export default function ManagingDirectorDashboard({
           </p>
         </div>
 
-        <div className="z-10 shrink-0">
+        <div className="z-10 shrink-0 flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+          <Link
+            href="/dashboard/assign"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs py-2.5 px-3.5 rounded-xl border border-white/20 transition cursor-pointer"
+          >
+            <UserCheck size={14} className="text-emerald-400" />
+            <span>Staff Allocations</span>
+          </Link>
           <Button
             onClick={() => {
               setSelectedManagerId(managers[0]?.id || '')
@@ -393,8 +402,15 @@ export default function ManagingDirectorDashboard({
                     )}
                   </div>
 
-                  {/* Right: Directive Action */}
+                  {/* Right: Directive & Assign Staff Actions */}
                   <div className="flex items-center gap-2 pl-13 lg:pl-0">
+                    <Link
+                      href={`/dashboard/assign`}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2.5 py-1.5 rounded-lg transition cursor-pointer h-8"
+                    >
+                      <UserCheck size={13} />
+                      <span>Assign Staff</span>
+                    </Link>
                     <Button
                       size="sm"
                       variant="secondary"

@@ -41,7 +41,7 @@ export default async function DashboardPage() {
     // 1. Fetch all managers & employees
     const { data: allProfiles } = await supabase
       .from('profiles')
-      .select('id, full_name, email, role, manager_id')
+      .select('id, full_name, email, role, manager_id, department, job_title')
 
     const managersList = (allProfiles || []).filter(p => p.role === 'manager')
     const employeesList = (allProfiles || []).filter(p => p.role === 'employee')

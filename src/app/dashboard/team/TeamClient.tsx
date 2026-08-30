@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { GoalStatusBadge } from '@/components/ui/Badge'
+import Link from 'next/link'
 import { 
   Award, 
   Compass, 
@@ -17,7 +18,9 @@ import {
   Users,
   ArrowRight,
   X,
-  Send
+  Send,
+  Building2,
+  UserCheck
 } from 'lucide-react'
 import { createFeedbackAction } from '@/app/dashboard/feedback/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
@@ -27,6 +30,11 @@ interface Employee {
   full_name: string | null
   email: string
   avatar_url: string | null
+  department?: string | null
+  job_title?: string | null
+  role?: string
+  manager_id?: string | null
+  manager_name?: string | null
 }
 
 interface Goal {
@@ -55,9 +63,10 @@ interface TeamClientProps {
   employees: Employee[]
   goals: Goal[]
   feedbacks: Feedback[]
+  isDirector?: boolean
 }
 
-export default function TeamClient({ managerProfile, employees, goals, feedbacks }: TeamClientProps) {
+export default function TeamClient({ managerProfile, employees, goals, feedbacks, isDirector }: TeamClientProps) {
   const [selectedEmpId, setSelectedEmpId] = useState<string | null>(null)
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
   const [feedbackType, setFeedbackType] = useState<'praising' | 'correction'>('praising')
@@ -393,22 +402,40 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
         <div>
-          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">My Team</h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Overview of team members, active goals, and praise tracking.</p>
+          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            {isDirector ? 'All Teams & Staff' : 'My Team'}
+          </h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+            {isDirector 
+              ? 'Company-wide staff roster, department distribution, active goals, and praise tracking.' 
+              : 'Overview of team members, active goals, and praise tracking.'}
+          </p>
         </div>
 
-        {employees.length > 0 && (
-          <div className="relative w-full sm:w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search team member..."
-              className="w-full pl-8 pr-3 py-2 sm:py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
-          </div>
-        )}
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          {isDirector && (
+            <Link
+              href="/dashboard/assign"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
+            >
+              <UserCheck size={14} className="text-amber-400" />
+              <span>Staff Allocation</span>
+            </Link>
+          )}
+
+          {employees.length > 0 && (
+            <div className="relative w-full sm:w-64">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search team member..."
+                className="w-full pl-8 pr-3 py-2 sm:py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* When 0 employees exist: Onboarding Empty State */}
@@ -475,6 +502,20 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                     <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-slate-900 text-sm truncate">{emp.full_name || 'Anonymous Employee'}</h3>
                       <p className="text-xs text-slate-400 truncate">{emp.email}</p>
+                      
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {emp.department && (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">
+                            <Building2 size={9} className="text-slate-400" />
+                            {emp.department}
+                          </span>
+                        )}
+                        {isDirector && (
+                          <span className="text-[9px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100 truncate max-w-[120px]">
+                            Mgr: {emp.manager_name || 'Unassigned'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

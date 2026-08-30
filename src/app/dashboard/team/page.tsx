@@ -25,17 +25,41 @@ export default async function TeamPage() {
 
   const isDirector = profile.role === 'managing_director'
 
+  // Fetch all managers for name lookup if director
+  let managersMap = new Map<string, string>()
+  if (isDirector) {
+    const { data: managersData } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .in('role', ['manager', 'managing_director'])
+    if (managersData) {
+      managersMap = new Map(managersData.map(m => [m.id, m.full_name || m.email]))
+    }
+  }
+
   // Fetch employees
   const employeesQuery = supabase
     .from('profiles')
-    .select('id, full_name, email, avatar_url')
+    .select('id, full_name, email, avatar_url, role, department, job_title, manager_id')
 
   if (!isDirector) {
     employeesQuery.eq('manager_id', user.id)
   } else {
     employeesQuery.eq('role', 'employee')
   }
-  const { data: employees } = await employeesQuery
+  const { data: rawEmployees } = await employeesQuery
+
+  const employees = (rawEmployees || []).map(emp => ({
+    id: emp.id,
+    full_name: emp.full_name,
+    email: emp.email,
+    avatar_url: emp.avatar_url,
+    department: (emp as { department?: string }).department || 'General',
+    job_title: (emp as { job_title?: string }).job_title || null,
+    role: emp.role,
+    manager_id: emp.manager_id,
+    manager_name: emp.manager_id ? managersMap.get(emp.manager_id) || null : null,
+  }))
 
   // Fetch goals
   const goalsQuery = supabase
@@ -80,9 +104,10 @@ export default async function TeamPage() {
         full_name: profile.full_name,
         email: profile.email,
       }}
-      employees={employees || []}
+      employees={employees}
       goals={formattedGoals}
       feedbacks={feedbacks || []}
+      isDirector={isDirector}
     />
   )
 }

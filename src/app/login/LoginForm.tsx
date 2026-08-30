@@ -274,6 +274,45 @@ export default function LoginForm() {
               )}
             </div>
           )}
+
+          {/* Department & Job Title */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="department" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Department
+              </label>
+              <select
+                id="department"
+                name="department"
+                defaultValue="Engineering"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white transition"
+              >
+                <option value="Engineering">Engineering</option>
+                <option value="Product">Product</option>
+                <option value="Design">Design</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Sales">Sales</option>
+                <option value="Operations">Operations</option>
+                <option value="Finance">Finance</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Customer Support">Customer Support</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="job_title" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Job Title <span className="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <input
+                id="job_title"
+                name="job_title"
+                type="text"
+                placeholder="e.g. Lead Engineer"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white transition"
+              />
+            </div>
+          </div>
         </>
       )}
 

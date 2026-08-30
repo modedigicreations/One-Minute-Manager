@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name    TEXT,
   role         TEXT NOT NULL DEFAULT 'employee' CHECK (role IN ('managing_director', 'manager', 'employee')),
   manager_id   UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  department   TEXT DEFAULT 'General',
+  job_title    TEXT,
   avatar_url   TEXT,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -23,7 +25,15 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, role, manager_id)
+  INSERT INTO public.profiles (
+    id, 
+    email, 
+    full_name, 
+    role, 
+    manager_id,
+    department,
+    job_title
+  )
   VALUES (
     NEW.id,
     NEW.email,
@@ -34,7 +44,9 @@ BEGIN
            OR NEW.raw_user_meta_data->>'manager_id' = '' 
            OR NEW.raw_user_meta_data->>'manager_id' = 'undefined' THEN NULL
       ELSE (NEW.raw_user_meta_data->>'manager_id')::uuid
-    END
+    END,
+    COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'department'), ''), 'General'),
+    NULLIF(TRIM(NEW.raw_user_meta_data->>'job_title'), '')
   );
   RETURN NEW;
 END;
@@ -124,6 +136,14 @@ CREATE POLICY "profiles_select_all" ON public.profiles
 
 CREATE POLICY "profiles_update_own" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "profiles_update_director" ON public.profiles
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = auth.uid() AND role = 'managing_director'
+    )
+  );
 
 -- 2. Goals Policies
 CREATE POLICY "goals_select_related" ON public.goals

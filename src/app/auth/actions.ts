@@ -62,6 +62,9 @@ export async function signupAction(formData: FormData) {
       return { success: false, error: 'Employees must select a manager.' }
     }
 
+    const department = (formData.get('department') as string)?.trim() || 'General'
+    const job_title = (formData.get('job_title') as string)?.trim() || ''
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -70,7 +73,9 @@ export async function signupAction(formData: FormData) {
         data: { 
           full_name: full_name || '',
           role,
-          manager_id: manager_id || undefined
+          manager_id: manager_id || undefined,
+          department: department || 'General',
+          job_title: job_title || undefined,
         },
       },
     })

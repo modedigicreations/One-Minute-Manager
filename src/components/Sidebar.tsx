@@ -13,7 +13,8 @@ import {
   X,
   Sparkles,
   User,
-  ShieldCheck
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react'
 import { logoutAction, switchUserRoleAction } from '@/app/auth/actions'
 import NotificationBell from '@/components/NotificationBell'
@@ -32,6 +33,7 @@ export default function Sidebar({ profile }: SidebarProps) {
 
   const directorLinks = [
     { href: '/dashboard', label: 'Executive Cockpit', icon: LayoutDashboard },
+    { href: '/dashboard/assign', label: 'Staff Allocation', icon: UserCheck },
     { href: '/dashboard/team', label: 'All Teams', icon: Users },
   ]
 
