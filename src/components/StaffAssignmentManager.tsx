@@ -18,7 +18,9 @@ import {
   Edit2, 
   CheckSquare, 
   Square,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Check
 } from 'lucide-react'
 import { 
   assignStaffAction, 
@@ -49,6 +51,7 @@ export interface ManagerProfile {
 interface StaffAssignmentManagerProps {
   staffList: StaffProfile[]
   managers: ManagerProfile[]
+  migrationNeeded?: boolean
 }
 
 const PRESET_DEPARTMENTS = [
@@ -64,7 +67,7 @@ const PRESET_DEPARTMENTS = [
   'General',
 ]
 
-export default function StaffAssignmentManager({ staffList, managers }: StaffAssignmentManagerProps) {
+export default function StaffAssignmentManager({ staffList, managers, migrationNeeded }: StaffAssignmentManagerProps) {
   // View mode: 'table' | 'by-manager' | 'by-dept'
   const [viewMode, setViewMode] = useState<'table' | 'by-manager' | 'by-dept'>('table')
 
@@ -93,6 +96,19 @@ export default function StaffAssignmentManager({ staffList, managers }: StaffAss
   // Operation loading & status state
   const [submitting, setSubmitting] = useState(false)
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [showMigrationNotice, setShowMigrationNotice] = useState(true)
+  const [copiedSql, setCopiedSql] = useState(false)
+
+  function handleCopyMigrationSql() {
+    const sql = `ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS department TEXT DEFAULT 'General', ADD COLUMN IF NOT EXISTS job_title TEXT;
+CREATE INDEX IF NOT EXISTS idx_profiles_department ON public.profiles(department);
+CREATE INDEX IF NOT EXISTS idx_profiles_job_title ON public.profiles(job_title);
+DROP POLICY IF EXISTS "profiles_update_director" ON public.profiles;
+CREATE POLICY "profiles_update_director" ON public.profiles FOR UPDATE USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'managing_director'));`
+    navigator.clipboard.writeText(sql)
+    setCopiedSql(true)
+    setTimeout(() => setCopiedSql(false), 2500)
+  }
 
   // Manager lookup map
   const managerMap = useMemo(() => {
@@ -352,6 +368,39 @@ export default function StaffAssignmentManager({ staffList, managers }: StaffAss
           >
             <X size={16} />
           </button>
+        </div>
+      )}
+
+      {/* Migration Notice Banner */}
+      {migrationNeeded && showMigrationNotice && (
+        <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-900 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Database Setup Notice for Custom Departments & Role Titles</p>
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                Staff members are loaded successfully. To enable custom departments, job titles, and RLS policies in Supabase, run the one-click migration script in your Supabase SQL Editor.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleCopyMigrationSql}
+              className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+            >
+              {copiedSql ? <Check size={13} /> : <Copy size={13} />}
+              <span>{copiedSql ? 'Copied to Clipboard!' : 'Copy Migration SQL'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMigrationNotice(false)}
+              className="text-amber-500 hover:text-amber-800 p-1 cursor-pointer"
+              title="Dismiss notice"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       )}
 

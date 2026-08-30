@@ -24,17 +24,8 @@ export default async function StaffAssignPage() {
     redirect('/dashboard')
   }
 
-  // 3. Fetch all profiles across the organization
-  const { data: allProfiles, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, role, manager_id, department, job_title, avatar_url')
-    .order('full_name', { ascending: true })
-
-  if (error) {
-    console.error('Error loading profiles for staff assignment:', error)
-  }
-
-  const profilesList = (allProfiles || []) as Array<{
+  // 3. Fetch all profiles across the organization with resilient fallback
+  let profilesList: Array<{
     id: string
     full_name: string | null
     email: string
@@ -43,7 +34,36 @@ export default async function StaffAssignPage() {
     department?: string | null
     job_title?: string | null
     avatar_url?: string | null
-  }>
+  }> = []
+  let migrationNeeded = false
+
+  // Attempt 1: Full query with department & job_title
+  const { data: fullProfiles, error: fullError } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, role, manager_id, department, job_title, avatar_url')
+    .order('full_name', { ascending: true })
+
+  if (!fullError && fullProfiles && fullProfiles.length > 0) {
+    profilesList = fullProfiles as typeof profilesList
+  } else {
+    // Attempt 2: Fallback query without department/job_title (in case columns are not yet added in Supabase)
+    const { data: basicProfiles, error: basicError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, role, manager_id, avatar_url')
+      .order('full_name', { ascending: true })
+
+    if (basicProfiles && basicProfiles.length > 0) {
+      migrationNeeded = true
+      profilesList = basicProfiles.map(p => ({
+        ...p,
+        department: 'General',
+        job_title: null,
+      })) as typeof profilesList
+    } else {
+      if (basicError) console.error('Basic profiles fetch error:', basicError)
+      if (fullError) console.error('Full profiles fetch error:', fullError)
+    }
+  }
 
   // Separate staff list and eligible managers
   const managersList = profilesList.filter(p => p.role === 'manager' || p.role === 'managing_director')
@@ -74,6 +94,7 @@ export default async function StaffAssignPage() {
     <StaffAssignmentManager
       staffList={staffList}
       managers={managers}
+      migrationNeeded={migrationNeeded}
     />
   )
 }

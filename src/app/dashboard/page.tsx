@@ -38,13 +38,36 @@ export default async function DashboardPage() {
   // CASE 1: MANAGING DIRECTOR (SUPER ADMIN)
   // ============================================================
   if (profile.role === 'managing_director') {
-    // 1. Fetch all managers & employees
-    const { data: allProfiles } = await supabase
+    // 1. Fetch all managers & employees with resilient fallback
+    let allProfiles: Array<{
+      id: string
+      full_name: string | null
+      email: string
+      role: string
+      manager_id: string | null
+      department?: string | null
+      job_title?: string | null
+    }> = []
+
+    const { data: fullProfiles, error: fullError } = await supabase
       .from('profiles')
       .select('id, full_name, email, role, manager_id, department, job_title')
 
-    const managersList = (allProfiles || []).filter(p => p.role === 'manager')
-    const employeesList = (allProfiles || []).filter(p => p.role === 'employee')
+    if (!fullError && fullProfiles && fullProfiles.length > 0) {
+      allProfiles = fullProfiles
+    } else {
+      const { data: basicProfiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role, manager_id')
+      allProfiles = (basicProfiles || []).map(p => ({
+        ...p,
+        department: 'General',
+        job_title: null,
+      }))
+    }
+
+    const managersList = allProfiles.filter(p => p.role === 'manager')
+    const employeesList = allProfiles.filter(p => p.role === 'employee')
 
     // 2. Fetch all goals across company
     const { data: allGoalsData } = await supabase

@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendNotificationInternal } from '@/app/dashboard/notifications/actions'
 
 export async function flagLagAction(formData: FormData) {
@@ -192,7 +192,46 @@ export async function assignStaffAction(
       updateSuccess = false
     }
 
-    // 5. Fallback to direct update if RPC is not yet created in Supabase instance
+    // 5. Try Admin client if service role key is configured in environment
+    if (!updateSuccess) {
+      try {
+        const adminClient = createAdminClient()
+        if (adminClient) {
+          const updatePayload: Record<string, unknown> = {
+            manager_id: managerId,
+            updated_at: new Date().toISOString(),
+          }
+          if (options?.department && options.department.trim()) {
+            updatePayload.department = options.department.trim()
+          }
+          if (options?.jobTitle && options.jobTitle.trim()) {
+            updatePayload.job_title = options.jobTitle.trim()
+          }
+
+          const { error: adminErr } = await adminClient
+            .from('profiles')
+            .update(updatePayload)
+            .in('id', staffIds)
+
+          if (!adminErr) {
+            updateSuccess = true
+          } else {
+            // Retry with just manager_id in case department/job_title column doesn't exist
+            const { error: retryAdminErr } = await adminClient
+              .from('profiles')
+              .update({ manager_id: managerId, updated_at: new Date().toISOString() })
+              .in('id', staffIds)
+            if (!retryAdminErr) {
+              updateSuccess = true
+            }
+          }
+        }
+      } catch {
+        updateSuccess = false
+      }
+    }
+
+    // 6. Direct update fallback using authenticated client
     if (!updateSuccess) {
       const updatePayload: Record<string, unknown> = {
         manager_id: managerId,
@@ -211,14 +250,25 @@ export async function assignStaffAction(
         .in('id', staffIds)
 
       if (updateErr) {
-        return { success: false, error: `Failed to update profiles: ${updateErr.message}` }
+        // Retry without department/job_title in case columns are not added in Supabase yet
+        const { error: retryErr } = await supabase
+          .from('profiles')
+          .update({ manager_id: managerId, updated_at: new Date().toISOString() })
+          .in('id', staffIds)
+
+        if (retryErr) {
+          return { 
+            success: false, 
+            error: `Failed to update profiles: ${retryErr.message}. Make sure RLS or SUPABASE_SERVICE_ROLE_KEY is set.` 
+          }
+        }
       }
     }
 
-    // 6. Fetch assigned staff names for personalized notification
+    // 7. Fetch assigned staff names for personalized notification
     const { data: assignedStaff } = await supabase
       .from('profiles')
-      .select('id, full_name, email, department')
+      .select('id, full_name, email')
       .in('id', staffIds)
 
     const managerDisplayName = targetManager.full_name || targetManager.email.split('@')[0]
@@ -402,13 +452,43 @@ export async function updateStaffAssignmentDetailsAction(
       updatePayload.role = data.role
     }
 
-    const { error: updateErr } = await supabase
-      .from('profiles')
-      .update(updatePayload)
-      .eq('id', staffId)
+    let updateDone = false
 
-    if (updateErr) {
-      return { success: false, error: updateErr.message }
+    // Try Admin client if service role key available
+    const adminClient = createAdminClient()
+    if (adminClient) {
+      const { error: adminErr } = await adminClient
+        .from('profiles')
+        .update(updatePayload)
+        .eq('id', staffId)
+
+      if (!adminErr) {
+        updateDone = true
+      } else {
+        const { error: retryAdminErr } = await adminClient
+          .from('profiles')
+          .update({ manager_id: data.managerId || null, updated_at: new Date().toISOString() })
+          .eq('id', staffId)
+        if (!retryAdminErr) updateDone = true
+      }
+    }
+
+    if (!updateDone) {
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update(updatePayload)
+        .eq('id', staffId)
+
+      if (updateErr) {
+        const { error: retryErr } = await supabase
+          .from('profiles')
+          .update({ manager_id: data.managerId || null, updated_at: new Date().toISOString() })
+          .eq('id', staffId)
+
+        if (retryErr) {
+          return { success: false, error: retryErr.message }
+        }
+      }
     }
 
     // If manager changed, notify the new manager and the staff member

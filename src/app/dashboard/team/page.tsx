@@ -37,7 +37,17 @@ export default async function TeamPage() {
     }
   }
 
-  // Fetch employees
+  interface RawEmployeeRecord {
+    id: string
+    full_name: string | null
+    email: string
+    avatar_url: string | null
+    role: string
+    manager_id: string | null
+    department?: string | null
+    job_title?: string | null
+  }
+  let rawEmployees: RawEmployeeRecord[] = []
   const employeesQuery = supabase
     .from('profiles')
     .select('id, full_name, email, avatar_url, role, department, job_title, manager_id')
@@ -47,7 +57,27 @@ export default async function TeamPage() {
   } else {
     employeesQuery.eq('role', 'employee')
   }
-  const { data: rawEmployees } = await employeesQuery
+  const { data: fullEmployees, error: fullEmpErr } = await employeesQuery
+
+  if (!fullEmpErr && fullEmployees && fullEmployees.length > 0) {
+    rawEmployees = fullEmployees
+  } else {
+    const fallbackQuery = supabase
+      .from('profiles')
+      .select('id, full_name, email, avatar_url, role, manager_id')
+
+    if (!isDirector) {
+      fallbackQuery.eq('manager_id', user.id)
+    } else {
+      fallbackQuery.eq('role', 'employee')
+    }
+    const { data: fallbackEmployees } = await fallbackQuery
+    rawEmployees = (fallbackEmployees || []).map(p => ({
+      ...p,
+      department: 'General',
+      job_title: null,
+    }))
+  }
 
   const employees = (rawEmployees || []).map(emp => ({
     id: emp.id,
