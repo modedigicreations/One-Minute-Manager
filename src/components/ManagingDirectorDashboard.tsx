@@ -146,36 +146,42 @@ interface ManagingDirectorDashboardProps {
     async function handleCreateGoal(e: React.FormEvent) {
       e.preventDefault()
       if (!selectedAssigneeId || !goalObjective.trim() || !goalExpectedResult.trim() || !goalDeadline) {
-        setGoalError('Please fill out all required goal fields.')
+        setGoalError('Please fill out all required fields (Assignee, Objective, Expected Result, and Deadline).')
         return
       }
 
       setSubmittingGoal(true)
       setGoalError(null)
 
-      const form = new FormData()
-      form.append('employee_id', selectedAssigneeId)
-      form.append('objective', goalObjective.trim())
-      form.append('expected_result', goalExpectedResult.trim())
-      form.append('deadline', goalDeadline)
-      form.append('progress', String(goalProgress || 0))
-      if (selectedSupervisorId && selectedSupervisorId !== 'self') {
-        form.append('manager_id', selectedSupervisorId)
-      }
+      try {
+        const form = new FormData()
+        form.append('employee_id', selectedAssigneeId)
+        form.append('objective', goalObjective.trim())
+        form.append('expected_result', goalExpectedResult.trim())
+        form.append('deadline', goalDeadline)
+        form.append('progress', String(goalProgress || 0))
+        if (selectedSupervisorId && selectedSupervisorId !== 'self') {
+          form.append('manager_id', selectedSupervisorId)
+        }
 
-      const res = await createGoalAction(form)
-      setSubmittingGoal(false)
+        const res = await createGoalAction(form)
 
-      if (res.success) {
-        setGoalModalOpen(false)
-        setSelectedAssigneeId('')
-        setGoalObjective('')
-        setGoalExpectedResult('')
-        setGoalDeadline('')
-        setGoalProgress(0)
-        window.location.reload()
-      } else {
-        setGoalError(res.error || 'Failed to create goal.')
+        if (res.success) {
+          setGoalModalOpen(false)
+          setSelectedAssigneeId('')
+          setGoalObjective('')
+          setGoalExpectedResult('')
+          setGoalDeadline('')
+          setGoalProgress(0)
+          window.location.reload()
+        } else {
+          setSubmittingGoal(false)
+          setGoalError(res.error || 'Failed to create goal. Please check database permissions.')
+        }
+      } catch (err) {
+        console.error('Create goal exception:', err)
+        setSubmittingGoal(false)
+        setGoalError(err instanceof Error ? err.message : 'An unexpected error occurred while saving the goal.')
       }
     }
 
@@ -775,7 +781,7 @@ interface ManagingDirectorDashboardProps {
       {/* ============================================================ */}
       {goalModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
-          <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
             <div className="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0" />
 
             {/* Modal Header */}
@@ -798,197 +804,210 @@ interface ManagingDirectorDashboardProps {
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleCreateGoal} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
-              {goalError && (
-                <div className="bg-rose-50 text-rose-700 p-3.5 rounded-xl text-xs font-bold border border-rose-200 flex items-center justify-between">
-                  <span>{goalError}</span>
-                  <button type="button" onClick={() => setGoalError(null)} className="text-rose-400 hover:text-rose-700">
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-
-              {/* Role filter pills */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Select Assignee Type
-                </label>
-                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setTargetRoleFilter('all')}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                      targetRoleFilter === 'all' 
-                        ? 'bg-white text-slate-900 shadow-xs' 
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    All Staff ({allStaff.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTargetRoleFilter('employee')}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                      targetRoleFilter === 'employee' 
-                        ? 'bg-white text-slate-900 shadow-xs' 
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    Employees ({allStaff.filter(s => s.role === 'employee').length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTargetRoleFilter('manager')}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                      targetRoleFilter === 'manager' 
-                        ? 'bg-white text-slate-900 shadow-xs' 
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    Managers ({allStaff.filter(s => s.role === 'manager').length})
-                  </button>
-                </div>
-              </div>
-
-              {/* Assignee dropdown */}
-              <div className="space-y-1.5">
-                <label htmlFor="assignee_id" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Assignee (Staff Member or Leader) <span className="text-rose-500">*</span>
-                </label>
-                {eligibleStaff.length === 0 ? (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                    No staff members found matching this category.
-                  </div>
-                ) : (
-                  <select
-                    id="assignee_id"
-                    value={selectedAssigneeId}
-                    onChange={(e) => setSelectedAssigneeId(e.target.value)}
-                    required
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-                  >
-                    <option value="">-- Choose employee or manager --</option>
-                    {eligibleStaff.map(staff => (
-                      <option key={staff.id} value={staff.id}>
-                        {staff.role === 'manager' ? '👑 [Manager]' : '👤 [Employee]'} {staff.full_name || staff.email} ({staff.department || 'General'})
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {selectedAssignee && (
-                  <div className="flex items-center gap-2 p-2 px-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs text-slate-600">
-                    <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] uppercase ${
-                      selectedAssignee.role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {selectedAssignee.role === 'manager' ? 'Manager' : 'Employee'}
-                    </span>
-                    <span className="font-semibold text-slate-900">{selectedAssignee.full_name || 'Anonymous'}</span>
-                    <span>•</span>
-                    <span>{selectedAssignee.email}</span>
+            {/* Form with Scrollable Body and Sticky Footer */}
+            <form onSubmit={handleCreateGoal} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                {goalError && (
+                  <div className="bg-rose-50 text-rose-700 p-3.5 rounded-xl text-xs font-bold border border-rose-200 flex items-center justify-between">
+                    <span>{goalError}</span>
+                    <button type="button" onClick={() => setGoalError(null)} className="text-rose-400 hover:text-rose-700">
+                      <X size={14} />
+                    </button>
                   </div>
                 )}
-              </div>
 
-              {/* Supervising Manager delegation (if assigning to employee) */}
-              {selectedAssignee?.role === 'employee' && managers.length > 0 && (
+                {/* Role filter pills */}
                 <div className="space-y-1.5">
-                  <label htmlFor="supervisor_id" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Supervising Manager
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Select Assignee Type
                   </label>
-                  <select
-                    id="supervisor_id"
-                    value={selectedSupervisorId}
-                    onChange={(e) => setSelectedSupervisorId(e.target.value)}
+                  <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setTargetRoleFilter('all')}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                        targetRoleFilter === 'all' 
+                          ? 'bg-white text-slate-900 shadow-xs' 
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      All Staff ({allStaff.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTargetRoleFilter('employee')}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                        targetRoleFilter === 'employee' 
+                          ? 'bg-white text-slate-900 shadow-xs' 
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      Employees ({allStaff.filter(s => s.role === 'employee').length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTargetRoleFilter('manager')}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                        targetRoleFilter === 'manager' 
+                          ? 'bg-white text-slate-900 shadow-xs' 
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      Managers ({allStaff.filter(s => s.role === 'manager').length})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Assignee dropdown */}
+                <div className="space-y-1.5">
+                  <label htmlFor="assignee_id" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Assignee (Staff Member or Leader) <span className="text-rose-500">*</span>
+                  </label>
+                  {eligibleStaff.length === 0 ? (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                      No staff members found matching this category.
+                    </div>
+                  ) : (
+                    <select
+                      id="assignee_id"
+                      value={selectedAssigneeId}
+                      onChange={(e) => setSelectedAssigneeId(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                    >
+                      <option value="">-- Choose employee or manager --</option>
+                      {eligibleStaff.map(staff => (
+                        <option key={staff.id} value={staff.id}>
+                          {staff.role === 'manager' ? '👑 [Manager]' : '👤 [Employee]'} {staff.full_name || staff.email} ({staff.department || 'General'})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {selectedAssignee && (
+                    <div className="flex items-center gap-2 p-2 px-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs text-slate-600">
+                      <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] uppercase ${
+                        selectedAssignee.role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {selectedAssignee.role === 'manager' ? 'Manager' : 'Employee'}
+                      </span>
+                      <span className="font-semibold text-slate-900">{selectedAssignee.full_name || 'Anonymous'}</span>
+                      <span>•</span>
+                      <span>{selectedAssignee.email}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Supervising Manager delegation (if assigning to employee) */}
+                {selectedAssignee?.role === 'employee' && managers.length > 0 && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="supervisor_id" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Supervising Manager
+                    </label>
+                    <select
+                      id="supervisor_id"
+                      value={selectedSupervisorId}
+                      onChange={(e) => setSelectedSupervisorId(e.target.value)}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                    >
+                      <option value="self">Super Admin Direct Oversight (You)</option>
+                      {managers.map(m => (
+                        <option key={m.id} value={m.id}>
+                          Delegate to: {m.full_name || m.email}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-slate-400">
+                      Choose whether you oversee this target directly or delegate supervisory follow-up to a manager.
+                    </p>
+                  </div>
+                )}
+
+                {/* Goal Objective */}
+                <div className="space-y-1.5">
+                  <label htmlFor="objective" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Goal Objective (Clear &amp; Specific) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    id="objective"
+                    type="text"
+                    required
+                    value={goalObjective}
+                    onChange={(e) => setGoalObjective(e.target.value)}
+                    placeholder="e.g. Deliver Q3 cross-department performance roadmap"
                     className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-                  >
-                    <option value="self">Super Admin Direct Oversight (You)</option>
-                    {managers.map(m => (
-                      <option key={m.id} value={m.id}>
-                        Delegate to: {m.full_name || m.email}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[11px] text-slate-400">
-                    Choose whether you oversee this target directly or delegate supervisory follow-up to a manager.
-                  </p>
+                  />
+                </div>
+
+                {/* Expected Result */}
+                <div className="space-y-1.5">
+                  <label htmlFor="expected_result" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Expected Result / Performance Standard <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    id="expected_result"
+                    required
+                    rows={3}
+                    value={goalExpectedResult}
+                    onChange={(e) => setGoalExpectedResult(e.target.value)}
+                    placeholder="Describe quantifiable standards under 250 words that can be reviewed in 60 seconds."
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white leading-relaxed"
+                  />
+                </div>
+
+                {/* Target Deadline */}
+                <div className="space-y-1.5">
+                  <label htmlFor="deadline" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Target Deadline <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    id="deadline"
+                    type="date"
+                    required
+                    value={goalDeadline}
+                    onChange={(e) => setGoalDeadline(e.target.value)}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                  />
+                </div>
+
+                {/* Progress Slider (Optional) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="progress" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Initial Progress
+                    </label>
+                    <span className="text-xs font-bold text-slate-700">{goalProgress}%</span>
+                  </div>
+                  <input
+                    id="progress"
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={goalProgress}
+                    onChange={(e) => setGoalProgress(Number(e.target.value))}
+                    className="w-full accent-[#EA2B42]"
+                  />
+                </div>
+              </div>
+
+              {/* Error Banner right above footer if error exists */}
+              {goalError && (
+                <div className="px-5 py-2.5 bg-rose-50 border-t border-rose-200 text-rose-700 text-xs font-bold flex items-center justify-between shrink-0">
+                  <span className="truncate">⚠️ {goalError}</span>
+                  <button type="button" onClick={() => setGoalError(null)} className="text-rose-400 hover:text-rose-700 ml-2">
+                    <X size={13} />
+                  </button>
                 </div>
               )}
 
-              {/* Goal Objective */}
-              <div className="space-y-1.5">
-                <label htmlFor="objective" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Goal Objective (Clear &amp; Specific) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  id="objective"
-                  type="text"
-                  required
-                  value={goalObjective}
-                  onChange={(e) => setGoalObjective(e.target.value)}
-                  placeholder="e.g. Deliver Q3 cross-department performance roadmap"
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-                />
-              </div>
-
-              {/* Expected Result */}
-              <div className="space-y-1.5">
-                <label htmlFor="expected_result" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Expected Result / Performance Standard <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  id="expected_result"
-                  required
-                  rows={3}
-                  value={goalExpectedResult}
-                  onChange={(e) => setGoalExpectedResult(e.target.value)}
-                  placeholder="Describe quantifiable standards under 250 words that can be reviewed in 60 seconds."
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white leading-relaxed"
-                />
-              </div>
-
-              {/* Target Deadline */}
-              <div className="space-y-1.5">
-                <label htmlFor="deadline" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Target Deadline <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  id="deadline"
-                  type="date"
-                  required
-                  value={goalDeadline}
-                  onChange={(e) => setGoalDeadline(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-                />
-              </div>
-
-              {/* Progress Slider (Optional) */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="progress" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Initial Progress
-                  </label>
-                  <span className="text-xs font-bold text-slate-700">{goalProgress}%</span>
-                </div>
-                <input
-                  id="progress"
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={goalProgress}
-                  onChange={(e) => setGoalProgress(Number(e.target.value))}
-                  className="w-full accent-[#EA2B42]"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 pb-safe">
+              {/* Sticky Fixed Footer */}
+              <div className="p-4 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0 gap-3">
                 <Button 
                   type="button" 
                   variant="ghost" 
                   onClick={() => setGoalModalOpen(false)}
-                  className="cursor-pointer"
+                  disabled={submittingGoal}
+                  className="cursor-pointer text-slate-600 hover:text-slate-900 text-xs sm:text-sm font-semibold"
                 >
                   Cancel
                 </Button>
@@ -998,7 +1017,7 @@ interface ManagingDirectorDashboardProps {
                   loading={submittingGoal}
                   className="bg-[#EA2B42] hover:bg-[#D91B3A] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-red-500/25 border-0 cursor-pointer"
                 >
-                  Assign One-Minute Goal
+                  {submittingGoal ? 'Assigning Goal...' : 'Assign One-Minute Goal'}
                 </Button>
               </div>
             </form>

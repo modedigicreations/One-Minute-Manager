@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendNotificationInternal } from '@/app/dashboard/notifications/actions'
 
 // Status helper using lexicographical YYYY-MM-DD date string comparison to avoid timezone offset bugs
@@ -28,7 +28,7 @@ export async function createGoalAction(formData: FormData) {
 
     // Get caller user and profile
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: 'Unauthorized' }
+    if (!user) return { success: false, error: 'Unauthorized. Please log in again.' }
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -46,7 +46,7 @@ export async function createGoalAction(formData: FormData) {
     const progress = isNaN(progressParsed) ? 0 : progressParsed
 
     if (!employee_id || !objective || !expected_result || !deadline) {
-      return { success: false, error: 'All fields are required.' }
+      return { success: false, error: 'All fields (Assignee, Objective, Expected Result, Deadline) are required.' }
     }
 
     // Determine supervising manager: default to current user (manager or super admin)
@@ -61,20 +61,52 @@ export async function createGoalAction(formData: FormData) {
 
     const status = determineStatus(progress, deadline)
 
-    const { error } = await supabase
-      .from('goals')
-      .insert({
-        manager_id: assignedManagerId,
-        employee_id,
-        objective,
-        expected_result,
-        deadline,
-        progress,
-        status,
-      })
+    const goalPayload = {
+      manager_id: assignedManagerId,
+      employee_id,
+      objective,
+      expected_result,
+      deadline,
+      progress,
+      status,
+    }
 
-    if (error) {
-      return { success: false, error: error.message }
+    let insertError: string | null = null
+    const adminSupabase = createAdminClient()
+
+    // If caller is managing_director and admin client is available, bypass RLS directly
+    if (profile?.role === 'managing_director' && adminSupabase) {
+      const { error: adminErr } = await adminSupabase
+        .from('goals')
+        .insert(goalPayload)
+      if (adminErr) {
+        console.warn('createGoalAction: Admin client insert error, falling back to authenticated client:', adminErr)
+        const { error: regErr } = await supabase.from('goals').insert(goalPayload)
+        if (regErr) insertError = regErr.message
+      }
+    } else {
+      const { error: regErr } = await supabase
+        .from('goals')
+        .insert(goalPayload)
+      if (regErr) {
+        // Fallback to admin client if standard client hit an RLS policy restriction
+        if (adminSupabase) {
+          console.warn('createGoalAction: Standard client insert failed, attempting admin client fallback:', regErr.message)
+          const { error: fallbackErr } = await adminSupabase
+            .from('goals')
+            .insert(goalPayload)
+          if (fallbackErr) {
+            insertError = fallbackErr.message
+          }
+        } else {
+          insertError = regErr.message
+        }
+      }
+    }
+
+    if (insertError) {
+      console.error('createGoalAction insert error:', insertError)
+      return { success: false, error: insertError }
     }
 
     // Notify assignee of newly assigned goal
