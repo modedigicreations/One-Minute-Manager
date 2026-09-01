@@ -173,6 +173,7 @@ export default async function DashboardPage() {
         totalEmployees={employeesList.length}
         totalPraises={totalPraises}
         totalCorrections={totalCorrections}
+        allStaff={allProfiles.filter(p => p.id !== user.id)}
       />
     )
   }
@@ -187,11 +188,11 @@ export default async function DashboardPage() {
       .select('id, full_name, email, avatar_url')
       .eq('manager_id', user.id)
 
-    // Fetch goals where manager_id = user.id
+    // Fetch goals where manager_id = user.id OR employee_id = user.id (assigned by super admin)
     const { data: goals } = await supabase
       .from('goals')
-      .select('id, objective, expected_result, deadline, progress, status, employee_id, profiles!goals_employee_id_fkey(full_name)')
-      .eq('manager_id', user.id)
+      .select('id, objective, expected_result, deadline, progress, status, employee_id, manager_id, profiles!goals_employee_id_fkey(full_name)')
+      .or(`manager_id.eq.${user.id},employee_id.eq.${user.id}`)
       .order('created_at', { ascending: false })
 
     // Fetch feedbacks where manager_id = user.id
@@ -262,6 +263,7 @@ export default async function DashboardPage() {
         goals={formattedGoals}
         feedbacks={formattedFeedbacks}
         stats={stats}
+        currentUserId={user.id}
         lagFlags={managerLagFlags as unknown as Array<{
           id: string
           flag_type: string

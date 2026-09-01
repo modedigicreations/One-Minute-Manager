@@ -26,9 +26,15 @@ export async function createGoalAction(formData: FormData) {
   try {
     const supabase = await createClient()
 
-    // Get current manager
+    // Get caller user and profile
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, full_name')
+      .eq('id', user.id)
+      .single()
 
     const employee_id = formData.get('employee_id') as string
     const objective = (formData.get('objective') as string)?.trim()
@@ -43,12 +49,22 @@ export async function createGoalAction(formData: FormData) {
       return { success: false, error: 'All fields are required.' }
     }
 
+    // Determine supervising manager: default to current user (manager or super admin)
+    // Super admin can optionally delegate supervision to another manager
+    let assignedManagerId = user.id
+    if (profile?.role === 'managing_director') {
+      const specifiedManagerId = formData.get('manager_id') as string
+      if (specifiedManagerId && specifiedManagerId !== 'self' && specifiedManagerId.trim() !== '') {
+        assignedManagerId = specifiedManagerId
+      }
+    }
+
     const status = determineStatus(progress, deadline)
 
     const { error } = await supabase
       .from('goals')
       .insert({
-        manager_id: user.id,
+        manager_id: assignedManagerId,
         employee_id,
         objective,
         expected_result,
@@ -61,14 +77,26 @@ export async function createGoalAction(formData: FormData) {
       return { success: false, error: error.message }
     }
 
-    // Notify employee of newly assigned goal
+    // Notify assignee of newly assigned goal
+    const creatorLabel = profile?.role === 'managing_director' ? 'Super Admin' : (profile?.full_name || 'Your Manager')
     await sendNotificationInternal({
       userId: employee_id,
       title: '🎯 New One-Minute Goal Assigned',
-      message: `Target: "${objective}" (Due: ${deadline})`,
+      message: `Target: "${objective}" (Assigned by ${creatorLabel}, Due: ${deadline})`,
       link: '/dashboard',
       type: 'goal_assigned',
     })
+
+    // If super admin delegated supervision to a manager, notify that manager as well
+    if (assignedManagerId !== user.id && assignedManagerId !== employee_id) {
+      await sendNotificationInternal({
+        userId: assignedManagerId,
+        title: '📋 Executive Goal Delegated to Your Oversight',
+        message: `Super Admin assigned "${objective}" to a team member under your supervision.`,
+        link: '/dashboard',
+        type: 'goal_assigned',
+      })
+    }
 
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/team')

@@ -52,6 +52,7 @@ interface Goal {
   progress: number
   status: 'not_started' | 'in_progress' | 'completed' | 'behind'
   employee_id: string
+  manager_id?: string
   profiles: {
     full_name: string | null
   }
@@ -83,6 +84,7 @@ interface ManagerDashboardProps {
     totalPraises?: number
     totalCorrections?: number
   }
+  currentUserId?: string
   lagFlags?: Array<{
     id: string
     flag_type: string
@@ -98,6 +100,7 @@ export default function ManagerDashboard({
   goals, 
   feedbacks, 
   stats,
+  currentUserId,
   lagFlags = []
 }: ManagerDashboardProps) {
   const openLagFlags = lagFlags.filter(f => f.status !== 'resolved')
@@ -793,9 +796,20 @@ export default function ManagerDashboard({
                   <div key={goal.id} className="p-4 sm:p-5 space-y-3 hover:bg-slate-50/50 transition">
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-0.5 min-w-0 flex-1">
-                        <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">{goal.objective}</h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">{goal.objective}</h4>
+                          {currentUserId && goal.employee_id === currentUserId && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wide">
+                              Executive Target (Assigned to You)
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-slate-400 truncate">
-                          Assigned to: <strong className="text-slate-700 font-semibold">{goal.profiles?.full_name || 'Anonymous'}</strong>
+                          {currentUserId && goal.employee_id === currentUserId ? (
+                            <span>Assigned to: <strong className="text-purple-700 font-semibold">You (Direct Executive Oversight)</strong></span>
+                          ) : (
+                            <span>Assigned to: <strong className="text-slate-700 font-semibold">{goal.profiles?.full_name || 'Anonymous'}</strong></span>
+                          )}
                         </p>
                       </div>
                       <GoalStatusBadge status={goal.status} />
