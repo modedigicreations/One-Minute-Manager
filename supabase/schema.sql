@@ -61,16 +61,35 @@ CREATE TRIGGER on_auth_user_created
 -- GOALS (One-Minute Goals)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.goals (
-  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  manager_id      UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  employee_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  objective       TEXT NOT NULL,
-  expected_result TEXT NOT NULL,
-  deadline        DATE NOT NULL,
-  progress        INTEGER NOT NULL DEFAULT 0 CHECK (progress BETWEEN 0 AND 100),
-  status          TEXT NOT NULL DEFAULT 'not_started' CHECK (status IN ('not_started', 'in_progress', 'completed', 'behind')),
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  manager_id           UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  employee_id          UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  objective            TEXT NOT NULL,
+  expected_result      TEXT NOT NULL,
+  deadline             DATE NOT NULL,
+  progress             INTEGER NOT NULL DEFAULT 0 CHECK (progress BETWEEN 0 AND 100),
+  status               TEXT NOT NULL DEFAULT 'not_started' CHECK (status IN ('not_started', 'in_progress', 'completed', 'behind')),
+  strategy_status      TEXT NOT NULL DEFAULT 'pending_submission' CHECK (strategy_status IN ('pending_submission', 'submitted', 'approved', 'revision_requested')),
+  strategy_text        TEXT,
+  strategy_feedback    TEXT,
+  strategy_submitted_at TIMESTAMPTZ,
+  strategy_approved_at  TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- GOAL STRATEGY ITERATIONS (Two-Way Communication Threads)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.goal_strategy_iterations (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  goal_id          UUID NOT NULL REFERENCES public.goals(id) ON DELETE CASCADE,
+  sender_id        UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  sender_role      TEXT NOT NULL CHECK (sender_role IN ('employee', 'manager', 'managing_director')),
+  action_type      TEXT NOT NULL CHECK (action_type IN ('submitted', 'revision_requested', 'approved', 'co_edited')),
+  strategy_content TEXT NOT NULL,
+  feedback_note    TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================

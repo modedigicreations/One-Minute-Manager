@@ -53,6 +53,11 @@ export interface DirectorGoal {
   deadline: string
   progress: number
   status: 'not_started' | 'in_progress' | 'completed' | 'behind'
+  strategy_status?: 'pending_submission' | 'submitted' | 'approved' | 'revision_requested'
+  strategy_text?: string | null
+  strategy_feedback?: string | null
+  strategy_submitted_at?: string | null
+  strategy_approved_at?: string | null
   manager_id: string
   employee_id: string
   manager_name: string

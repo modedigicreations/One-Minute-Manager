@@ -302,3 +302,237 @@ export async function updateGoalProgressAction(goalId: string, progress: number,
     return { success: false, error: err instanceof Error ? err.message : 'Failed to update progress.' }
   }
 }
+
+/**
+ * Submit / Update Goal Execution Strategy (Two-Way Communication)
+ */
+export async function submitGoalStrategyAction(goalId: string, strategyText: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    if (!strategyText || !strategyText.trim()) {
+      return { success: false, error: 'Please enter your proposed strategy statement.' }
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, full_name')
+      .eq('id', user.id)
+      .single()
+
+    // Fetch the goal
+    const { data: goal, error: goalErr } = await supabase
+      .from('goals')
+      .select('id, manager_id, employee_id, objective')
+      .eq('id', goalId)
+      .single()
+
+    if (goalErr || !goal) {
+      return { success: false, error: 'Goal not found.' }
+    }
+
+    const trimmedStrategy = strategyText.trim()
+    const nowIso = new Date().toISOString()
+
+    // Update goal strategy fields
+    const adminSupabase = createAdminClient()
+    const clientToUse = adminSupabase || supabase
+
+    const { error: updateErr } = await clientToUse
+      .from('goals')
+      .update({
+        strategy_text: trimmedStrategy,
+        strategy_status: 'submitted',
+        strategy_submitted_at: nowIso,
+      })
+      .eq('id', goalId)
+
+    if (updateErr) {
+      console.error('Failed to update goal strategy:', updateErr)
+      return { success: false, error: updateErr.message }
+    }
+
+    // Attempt to log iteration in goal_strategy_iterations (failsafe if table doesn't exist yet)
+    try {
+      await clientToUse.from('goal_strategy_iterations').insert({
+        goal_id: goalId,
+        sender_id: user.id,
+        sender_role: profile?.role || 'employee',
+        action_type: 'submitted',
+        strategy_content: trimmedStrategy,
+      })
+    } catch (e) {
+      console.warn('goal_strategy_iterations log skipped:', e)
+    }
+
+    // Notify manager that strategy has been submitted for approval
+    const senderName = profile?.full_name || 'Your staff member'
+    if (goal.manager_id) {
+      await sendNotificationInternal({
+        userId: goal.manager_id,
+        title: '💡 Strategy Submitted for Review',
+        message: `${senderName} submitted a 60-second strategy for "${goal.objective}". Review and approve or provide feedback.`,
+        link: '/dashboard',
+        type: 'directive',
+      })
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (err) {
+    console.error('submitGoalStrategyAction error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to submit strategy.' }
+  }
+}
+
+/**
+ * Review Goal Strategy: Approve or Query/Request Revision (Manager / Super Admin)
+ */
+export async function reviewGoalStrategyAction(
+  goalId: string, 
+  decision: 'approve' | 'request_revision', 
+  feedbackNote?: string
+) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Unauthorized' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, full_name')
+      .eq('id', user.id)
+      .single()
+
+    // Fetch the goal
+    const { data: goal, error: goalErr } = await supabase
+      .from('goals')
+      .select('id, manager_id, employee_id, objective, strategy_text, status')
+      .eq('id', goalId)
+      .single()
+
+    if (goalErr || !goal) {
+      return { success: false, error: 'Goal not found.' }
+    }
+
+    const nowIso = new Date().toISOString()
+    const adminSupabase = createAdminClient()
+    const clientToUse = adminSupabase || supabase
+
+    if (decision === 'approve') {
+      const updatePayload: Record<string, unknown> = {
+        strategy_status: 'approved',
+        strategy_approved_at: nowIso,
+      }
+      if (goal.status === 'not_started') {
+        updatePayload.status = 'in_progress'
+      }
+
+      const { error: updateErr } = await clientToUse
+        .from('goals')
+        .update(updatePayload)
+        .eq('id', goalId)
+
+      if (updateErr) {
+        return { success: false, error: updateErr.message }
+      }
+
+      try {
+        await clientToUse.from('goal_strategy_iterations').insert({
+          goal_id: goalId,
+          sender_id: user.id,
+          sender_role: profile?.role || 'manager',
+          action_type: 'approved',
+          strategy_content: goal.strategy_text || '',
+          feedback_note: feedbackNote?.trim() || 'Strategy approved for execution.',
+        })
+      } catch (e) {
+        console.warn('goal_strategy_iterations log skipped:', e)
+      }
+
+      // Notify employee
+      await sendNotificationInternal({
+        userId: goal.employee_id,
+        title: '✅ Strategy Approved! Clear to Execute',
+        message: `Your manager approved your strategy for "${goal.objective}". Track your self-progress as you execute.`,
+        link: '/dashboard',
+        type: 'system',
+      })
+    } else {
+      // Request Revision / Query Strategy
+      if (!feedbackNote || !feedbackNote.trim()) {
+        return { success: false, error: 'Please provide query feedback so the staff member knows what to adjust.' }
+      }
+
+      const { error: updateErr } = await clientToUse
+        .from('goals')
+        .update({
+          strategy_status: 'revision_requested',
+          strategy_feedback: feedbackNote.trim(),
+        })
+        .eq('id', goalId)
+
+      if (updateErr) {
+        return { success: false, error: updateErr.message }
+      }
+
+      try {
+        await clientToUse.from('goal_strategy_iterations').insert({
+          goal_id: goalId,
+          sender_id: user.id,
+          sender_role: profile?.role || 'manager',
+          action_type: 'revision_requested',
+          strategy_content: goal.strategy_text || '',
+          feedback_note: feedbackNote.trim(),
+        })
+      } catch (e) {
+        console.warn('goal_strategy_iterations log skipped:', e)
+      }
+
+      // Notify employee
+      await sendNotificationInternal({
+        userId: goal.employee_id,
+        title: '⚠️ Strategy Query: Revision Requested',
+        message: `Manager feedback on "${goal.objective}": "${feedbackNote.trim()}". Please update your plan.`,
+        link: '/dashboard',
+        type: 'directive',
+      })
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (err) {
+    console.error('reviewGoalStrategyAction error:', err)
+    return { success: false, error: err instanceof Error ? err.message : 'Failed to review strategy.' }
+  }
+}
+
+/**
+ * Fetch Strategy Iterations History for a Goal
+ */
+export async function getGoalStrategyHistoryAction(goalId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, iterations: [] }
+
+    const { data, error } = await supabase
+      .from('goal_strategy_iterations')
+      .select('*, profiles:sender_id(full_name, role, email)')
+      .eq('goal_id', goalId)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      return { success: false, iterations: [] }
+    }
+
+    return { success: true, iterations: data || [] }
+  } catch (err) {
+    console.error('getGoalStrategyHistoryAction error:', err)
+    return { success: false, iterations: [] }
+  }
+}

@@ -72,7 +72,7 @@ export default async function DashboardPage() {
     // 2. Fetch all goals across company
     const { data: allGoalsData } = await supabase
       .from('goals')
-      .select('id, objective, expected_result, deadline, progress, status, manager_id, employee_id')
+      .select('id, objective, expected_result, deadline, progress, status, manager_id, employee_id, strategy_status, strategy_text, strategy_feedback, strategy_submitted_at, strategy_approved_at')
       .order('created_at', { ascending: false })
 
     // 3. Fetch all feedbacks
@@ -112,6 +112,11 @@ export default async function DashboardPage() {
         deadline: g.deadline,
         progress: g.progress,
         status: effectiveStatus as 'not_started' | 'in_progress' | 'completed' | 'behind',
+        strategy_status: (g.strategy_status || 'pending_submission') as 'pending_submission' | 'submitted' | 'approved' | 'revision_requested',
+        strategy_text: g.strategy_text || null,
+        strategy_feedback: g.strategy_feedback || null,
+        strategy_submitted_at: g.strategy_submitted_at || null,
+        strategy_approved_at: g.strategy_approved_at || null,
         manager_id: g.manager_id,
         employee_id: g.employee_id,
         manager_name: mgr?.full_name || 'Manager',
@@ -191,7 +196,7 @@ export default async function DashboardPage() {
     // Fetch goals where manager_id = user.id OR employee_id = user.id (assigned by super admin)
     const { data: goals } = await supabase
       .from('goals')
-      .select('id, objective, expected_result, deadline, progress, status, employee_id, manager_id, profiles!goals_employee_id_fkey(full_name)')
+      .select('id, objective, expected_result, deadline, progress, status, employee_id, manager_id, strategy_status, strategy_text, strategy_feedback, strategy_submitted_at, strategy_approved_at, profiles!goals_employee_id_fkey(full_name)')
       .or(`manager_id.eq.${user.id},employee_id.eq.${user.id}`)
       .order('created_at', { ascending: false })
 
@@ -227,6 +232,11 @@ export default async function DashboardPage() {
       return {
         ...g,
         status: effectiveStatus as 'not_started' | 'in_progress' | 'completed' | 'behind',
+        strategy_status: (g.strategy_status || 'pending_submission') as 'pending_submission' | 'submitted' | 'approved' | 'revision_requested',
+        strategy_text: g.strategy_text || null,
+        strategy_feedback: g.strategy_feedback || null,
+        strategy_submitted_at: g.strategy_submitted_at || null,
+        strategy_approved_at: g.strategy_approved_at || null,
         profiles: {
           full_name: p?.full_name || 'Anonymous'
         }
@@ -238,6 +248,7 @@ export default async function DashboardPage() {
       completed: formattedGoals.filter(g => g.status === 'completed').length,
       inProgress: formattedGoals.filter(g => g.status === 'in_progress' || g.status === 'not_started').length,
       behind: formattedGoals.filter(g => g.status === 'behind').length,
+      pendingStrategies: formattedGoals.filter(g => g.strategy_status === 'submitted').length,
       totalPraises: feedbacks?.filter(f => f.type === 'praising').length || 0,
       totalCorrections: feedbacks?.filter(f => f.type === 'correction').length || 0,
     }
@@ -281,7 +292,7 @@ export default async function DashboardPage() {
   // Fetch goals assigned to this employee
   const { data: goals } = await supabase
     .from('goals')
-    .select('id, objective, expected_result, deadline, progress, status')
+    .select('id, objective, expected_result, deadline, progress, status, manager_id, strategy_status, strategy_text, strategy_feedback, strategy_submitted_at, strategy_approved_at')
     .eq('employee_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -294,6 +305,11 @@ export default async function DashboardPage() {
     return {
       ...g,
       status: effectiveStatus as 'not_started' | 'in_progress' | 'completed' | 'behind',
+      strategy_status: (g.strategy_status || 'pending_submission') as 'pending_submission' | 'submitted' | 'approved' | 'revision_requested',
+      strategy_text: g.strategy_text || null,
+      strategy_feedback: g.strategy_feedback || null,
+      strategy_submitted_at: g.strategy_submitted_at || null,
+      strategy_approved_at: g.strategy_approved_at || null,
     }
   })
 
