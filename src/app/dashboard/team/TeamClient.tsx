@@ -44,6 +44,11 @@ interface Goal {
   deadline: string
   progress: number
   status: 'not_started' | 'in_progress' | 'completed' | 'behind'
+  strategy_status?: 'pending_submission' | 'submitted' | 'approved' | 'revision_requested'
+  strategy_text?: string | null
+  strategy_feedback?: string | null
+  strategy_submitted_at?: string | null
+  strategy_approved_at?: string | null
   employee_id: string
 }
 
@@ -216,38 +221,69 @@ export default function TeamClient({ managerProfile, employees, goals, feedbacks
                     No goals assigned to this team member yet. Set one from the main dashboard!
                   </div>
                 ) : (
-                  selectedGoals.map((goal) => (
-                    <div key={goal.id} className="p-4 sm:p-5 space-y-2.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <h4 className="font-bold text-slate-900 text-sm leading-snug">{goal.objective}</h4>
-                        <GoalStatusBadge status={goal.status} />
-                      </div>
+                  selectedGoals.map((goal) => {
+                    const stratStatus = goal.strategy_status || 'pending_submission'
+                    return (
+                      <div key={goal.id} className="p-4 sm:p-5 space-y-2.5">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="space-y-0.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-bold text-slate-900 text-sm leading-snug">{goal.objective}</h4>
+                              {stratStatus === 'approved' && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Strategy Agreed
+                                </span>
+                              )}
+                              {stratStatus === 'submitted' && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 animate-pulse">
+                                  Strategy Submitted
+                                </span>
+                              )}
+                              {stratStatus === 'revision_requested' && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                                  Revision Requested
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <GoalStatusBadge status={goal.status} />
+                        </div>
 
-                      <div className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3">
-                        <strong className="text-slate-700">Expected Result:</strong> {goal.expected_result}
-                      </div>
+                        <div className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                          <strong className="text-slate-700">Expected Result:</strong> {goal.expected_result}
+                        </div>
 
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-semibold text-slate-400">
-                        <span className="text-slate-500 text-[11px]">Deadline: {formatStaticDate(goal.deadline)}</span>
-                        
-                        <div className="flex items-center gap-2 w-full sm:w-1/2">
-                          <span className="text-xs font-bold text-slate-700">{goal.progress}%</span>
-                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
-                            <div 
-                              className={`h-full rounded-full transition-all ${
-                                goal.status === 'completed' 
-                                  ? 'bg-emerald-500' 
-                                  : goal.status === 'behind' 
-                                  ? 'bg-rose-500' 
-                                  : 'bg-slate-800'
-                              }`}
-                              style={{ width: `${goal.progress}%` }}
-                            />
+                        {goal.strategy_text && (
+                          <div className="text-xs bg-blue-50/50 border border-blue-100 rounded-xl p-3 text-slate-700">
+                            <strong className="text-blue-900 block text-[11px] mb-0.5">
+                              {stratStatus === 'approved' ? 'Agreed 60-Second Strategy:' : 'Proposed 60-Second Strategy:'}
+                            </strong>
+                            <p className="italic text-slate-600">&ldquo;{goal.strategy_text}&rdquo;</p>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs font-semibold text-slate-400">
+                          <span className="text-slate-500 text-[11px]">Deadline: {formatStaticDate(goal.deadline)}</span>
+                          
+                          <div className="flex items-center gap-2 w-full sm:w-1/2">
+                            <span className="text-xs font-bold text-slate-700">{goal.progress}%</span>
+                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
+                              <div 
+                                className={`h-full rounded-full transition-all ${
+                                  goal.status === 'completed' 
+                                    ? 'bg-emerald-500' 
+                                    : goal.status === 'behind' 
+                                    ? 'bg-rose-500' 
+                                    : 'bg-slate-800'
+                                }`}
+                                style={{ width: `${goal.progress}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    )
+                  })
                 )}
               </CardContent>
             </Card>

@@ -94,7 +94,7 @@ export default async function TeamPage() {
   // Fetch goals
   const goalsQuery = supabase
     .from('goals')
-    .select('id, objective, expected_result, deadline, progress, status, employee_id')
+    .select('id, objective, expected_result, deadline, progress, status, employee_id, manager_id, strategy_status, strategy_text, strategy_feedback, strategy_submitted_at, strategy_approved_at')
 
   if (!isDirector) {
     goalsQuery.eq('manager_id', user.id)
@@ -114,6 +114,11 @@ export default async function TeamPage() {
     return {
       ...g,
       status: effectiveStatus as 'not_started' | 'in_progress' | 'completed' | 'behind',
+      strategy_status: (g.strategy_status || 'pending_submission') as 'pending_submission' | 'submitted' | 'approved' | 'revision_requested',
+      strategy_text: g.strategy_text || null,
+      strategy_feedback: g.strategy_feedback || null,
+      strategy_submitted_at: g.strategy_submitted_at || null,
+      strategy_approved_at: g.strategy_approved_at || null,
     }
   })
 

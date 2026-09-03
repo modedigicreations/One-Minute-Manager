@@ -16,12 +16,17 @@ import {
   Sparkles,
   Clock,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Users,
   Award,
-  Plus
+  Plus,
+  Lightbulb,
+  AlertCircle
 } from 'lucide-react'
+import { GoalStatusBadge } from '@/components/ui/Badge'
 import { flagLagAction, updateLagStatusAction } from '@/app/dashboard/director/actions'
-import { createGoalAction } from '@/app/dashboard/goals/actions'
+import { createGoalAction, reviewGoalStrategyAction } from '@/app/dashboard/goals/actions'
 import { formatStaticDate, ClientFeedbackTime } from '@/lib/utils'
 
 export interface StaffMember {
@@ -88,20 +93,20 @@ interface ManagingDirectorDashboardProps {
   lagFlags: DirectorLagFlag[]
   totalEmployees: number
   totalPraises: number
-    totalCorrections: number
-    allStaff?: StaffMember[]
-  }
+  totalCorrections: number
+  allStaff?: StaffMember[]
+}
 
-  export default function ManagingDirectorDashboard({
-    directorProfile,
-    managers,
-    allGoals,
-    lagFlags,
-    totalEmployees,
-    totalPraises,
-    totalCorrections,
-    allStaff = [],
-  }: ManagingDirectorDashboardProps) {
+export default function ManagingDirectorDashboard({
+  directorProfile,
+  managers,
+  allGoals,
+  lagFlags,
+  totalEmployees,
+  totalPraises,
+  totalCorrections,
+  allStaff = [],
+}: ManagingDirectorDashboardProps) {
     // Modal state
     const [directiveModalOpen, setDirectiveModalOpen] = useState(false)
     const [selectedManagerId, setSelectedManagerId] = useState('')
@@ -124,6 +129,16 @@ interface ManagingDirectorDashboardProps {
 
     // Search state
     const [managerSearch, setManagerSearch] = useState('')
+
+    // Company Goals & Strategy Oversight states
+    const [goalSearch, setGoalSearch] = useState('')
+    const [goalFilter, setGoalFilter] = useState<'all' | 'pending_strategy' | 'in_progress' | 'completed' | 'behind'>('all')
+    const [strategyReviewModalOpen, setStrategyReviewModalOpen] = useState(false)
+    const [reviewingGoal, setReviewingGoal] = useState<DirectorGoal | null>(null)
+    const [revisionFeedback, setRevisionFeedback] = useState('')
+    const [submittingStrategyReview, setSubmittingStrategyReview] = useState(false)
+    const [strategyReviewError, setStrategyReviewError] = useState<string | null>(null)
+    const [expandedStrategies, setExpandedStrategies] = useState<Record<string, boolean>>({})
 
     // Submitting state
     const [submitting, setSubmitting] = useState(false)
@@ -209,6 +224,11 @@ interface ManagingDirectorDashboardProps {
     return allGoals.filter(g => g.status === 'behind')
   }, [allGoals])
 
+  // Open lag flags
+  const openLagFlags = useMemo(() => {
+    return lagFlags.filter(f => f.status !== 'resolved')
+  }, [lagFlags])
+
   // Filtered managers
   const filteredManagers = useMemo(() => {
     if (!managerSearch.trim()) return managers
@@ -257,6 +277,55 @@ interface ManagingDirectorDashboardProps {
     } else {
       alert(res.error || 'Failed to update directive status.')
       setActionInProgress(null)
+    }
+  }
+
+  // Count of pending strategy proposals submitted company-wide
+  const pendingStrategyGoals = useMemo(() => {
+    return allGoals.filter(g => g.strategy_status === 'submitted')
+  }, [allGoals])
+
+  // Company-wide filtered goals with search & status filters
+  const filteredCompanyGoals = useMemo(() => {
+    return allGoals.filter(g => {
+      if (goalFilter === 'pending_strategy') {
+        if (g.strategy_status !== 'submitted') return false
+      } else if (goalFilter === 'in_progress' && g.status !== 'in_progress' && g.status !== 'not_started') return false
+      else if (goalFilter === 'completed' && g.status !== 'completed') return false
+      else if (goalFilter === 'behind' && g.status !== 'behind') return false
+
+      if (goalSearch.trim()) {
+        const q = goalSearch.toLowerCase()
+        const objMatch = g.objective.toLowerCase().includes(q)
+        const expMatch = g.expected_result.toLowerCase().includes(q)
+        const empMatch = (g.employee_name || '').toLowerCase().includes(q)
+        const mgrMatch = (g.manager_name || '').toLowerCase().includes(q)
+        const stratMatch = (g.strategy_text || '').toLowerCase().includes(q)
+        return objMatch || expMatch || empMatch || mgrMatch || stratMatch
+      }
+
+      return true
+    })
+  }, [allGoals, goalFilter, goalSearch])
+
+  // Super Admin Strategy Review Handler (Approve or Request Revision on ANY goal in company)
+  async function handleReviewStrategy(decision: 'approve' | 'request_revision') {
+    if (!reviewingGoal) return
+    if (decision === 'request_revision' && !revisionFeedback.trim()) {
+      setStrategyReviewError('Please provide feedback explaining what needs adjustment in the strategy.')
+      return
+    }
+
+    setSubmittingStrategyReview(true)
+    setStrategyReviewError(null)
+
+    const res = await reviewGoalStrategyAction(reviewingGoal.id, decision, revisionFeedback.trim())
+    if (res.success) {
+      setStrategyReviewModalOpen(false)
+      window.location.reload()
+    } else {
+      setSubmittingStrategyReview(false)
+      setStrategyReviewError(res.error || 'Failed to update strategy.')
     }
   }
 
@@ -525,147 +594,403 @@ interface ManagingDirectorDashboardProps {
       </Card>
 
       {/* ============================================================ */}
-      {/* 4. LOWER TWO-COLUMN SECTION (RECENT GOALS & NEEDS REVIEW) */}
+      {/* 2.5 EXECUTIVE TWO-WAY STRATEGY ACTION NOTICE (If Any Submitted) */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
-        {/* Left: Recent Goals & Activity */}
-        <Card className="border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
-          <CardHeader className="p-4 sm:p-5 border-slate-100 pb-3 flex flex-row items-center justify-between">
+      {pendingStrategyGoals.length > 0 && (
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-sm animate-in fade-in duration-300">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#1D68FE] flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20 shrink-0">
+              <Lightbulb size={20} />
+            </div>
             <div>
-              <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
-                Recent Goals & Activity
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-400">
-                Company goals across all active reporting lines.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <Button
-                size="sm"
-                onClick={() => {
-                  setSelectedAssigneeId('')
-                  setGoalObjective('')
-                  setGoalExpectedResult('')
-                  setGoalDeadline('')
-                  setGoalProgress(0)
-                  setGoalError(null)
-                  setGoalModalOpen(true)
-                }}
-                className="bg-[#EA2B42] hover:bg-[#D91B3A] text-white font-bold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-xs border-0 cursor-pointer"
-              >
-                <Plus size={13} />
-                <span>Set Goal</span>
-              </Button>
-              <Link 
-                href="/dashboard/team" 
-                className="text-[#1D68FE] font-bold text-xs hover:underline flex items-center gap-0.5"
-              >
-                <span>View all</span>
-                <ChevronRight size={14} />
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 divide-y divide-slate-100/80 max-h-96 overflow-y-auto">
-            {allGoals.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400">
-                No goals registered in the company yet.
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                  {pendingStrategyGoals.length} 60-Second Strategy {pendingStrategyGoals.length === 1 ? 'Suggestion' : 'Suggestions'} Submitted Across Company
+                </h4>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200 uppercase tracking-wide">
+                  Action Required
+                </span>
               </div>
-            ) : (
-              allGoals.slice(0, 5).map((goal) => (
-                <div key={goal.id} className="p-4 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition">
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <h5 className="font-bold text-slate-900 text-xs sm:text-sm truncate">{goal.objective}</h5>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 flex-wrap">
-                      <span>{goal.employee_name}</span>
-                      <span>•</span>
-                      <span>Mgr: {goal.manager_name}</span>
-                      <span>•</span>
-                      <span>Due: {formatStaticDate(goal.deadline)}</span>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Staff members have proposed their execution strategies. As Super Admin, you have full oversight to review, sign-off, or query any strategy company-wide.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              setGoalFilter('pending_strategy')
+              const el = document.getElementById('company-goals-oversight')
+              if (el) el.scrollIntoView({ behavior: 'smooth' })
+            }}
+            className="bg-[#1D68FE] hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shrink-0 cursor-pointer shadow-xs border-0 self-end sm:self-auto"
+          >
+            Review Strategy Bids ({pendingStrategyGoals.length})
+          </Button>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 4. COMPANY-WIDE GOALS & STRATEGY OVERSIGHT + NEEDS REVIEW */}
+      {/* ============================================================ */}
+      <div id="company-goals-oversight" className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
+        {/* Left Column (Span 2): Company-Wide Goals & Strategy Oversight Center */}
+        <div className="xl:col-span-2 space-y-6">
+          <Card className="border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+            <CardHeader className="p-4 sm:p-5 border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Briefcase size={18} className="text-slate-500" />
+                  <span>Company-Wide Goals &amp; Strategy Oversight</span>
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-400">
+                  Every task, execution standard, and 60-second strategy proposal across all employees and managers.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setSelectedAssigneeId('')
+                    setGoalObjective('')
+                    setGoalExpectedResult('')
+                    setGoalDeadline('')
+                    setGoalProgress(0)
+                    setGoalError(null)
+                    setGoalModalOpen(true)
+                  }}
+                  className="bg-[#EA2B42] hover:bg-[#D91B3A] text-white font-bold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-xs border-0 cursor-pointer"
+                >
+                  <Plus size={13} />
+                  <span>Set Goal</span>
+                </Button>
+                <Link 
+                  href="/dashboard/team" 
+                  className="text-[#1D68FE] font-bold text-xs hover:underline flex items-center gap-0.5"
+                >
+                  <span>Team</span>
+                  <ChevronRight size={14} />
+                </Link>
+              </div>
+            </CardHeader>
+
+            {/* Search & Filter Bar */}
+            <div className="px-4 sm:px-6 py-2.5 bg-slate-50/80 border-y border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              {/* Search input */}
+              <div className="relative w-full sm:max-w-xs">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={goalSearch}
+                  onChange={(e) => setGoalSearch(e.target.value)}
+                  placeholder="Search objective, employee, manager, or strategy..."
+                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
+                />
+                {goalSearch && (
+                  <button 
+                    onClick={() => setGoalSearch('')} 
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1 text-xs overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+                <button
+                  onClick={() => setGoalFilter('all')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 cursor-pointer ${
+                    goalFilter === 'all' 
+                      ? 'bg-slate-900 text-white shadow-xs' 
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  All ({allGoals.length})
+                </button>
+                {pendingStrategyGoals.length > 0 && (
+                  <button
+                    onClick={() => setGoalFilter('pending_strategy')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 cursor-pointer ${
+                      goalFilter === 'pending_strategy' 
+                        ? 'bg-blue-600 text-white shadow-xs' 
+                        : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
+                    }`}
+                  >
+                    💡 Strategy Bids ({pendingStrategyGoals.length})
+                  </button>
+                )}
+                <button
+                  onClick={() => setGoalFilter('in_progress')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 cursor-pointer ${
+                    goalFilter === 'in_progress' 
+                      ? 'bg-slate-900 text-white shadow-xs' 
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Active ({allGoals.filter(g => g.status === 'in_progress' || g.status === 'not_started').length})
+                </button>
+                <button
+                  onClick={() => setGoalFilter('completed')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 cursor-pointer ${
+                    goalFilter === 'completed' 
+                      ? 'bg-slate-900 text-white shadow-xs' 
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Done ({allGoals.filter(g => g.status === 'completed').length})
+                </button>
+                {allGoals.filter(g => g.status === 'behind').length > 0 && (
+                  <button
+                    onClick={() => setGoalFilter('behind')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition shrink-0 cursor-pointer ${
+                      goalFilter === 'behind' 
+                        ? 'bg-rose-600 text-white shadow-xs' 
+                        : 'text-rose-600 hover:bg-rose-50'
+                    }`}
+                  >
+                    Behind ({allGoals.filter(g => g.status === 'behind').length})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Goals List */}
+            <CardContent className="p-0 divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+              {allGoals.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400">
+                  No company goals created yet. Use "Set Goal" to assign the first target.
+                </div>
+              ) : filteredCompanyGoals.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400">
+                  No company goals match your current filter or search query.
+                </div>
+              ) : (
+                filteredCompanyGoals.map((goal) => {
+                  const stratStatus = goal.strategy_status || 'pending_submission'
+                  return (
+                    <div key={goal.id} className="p-4 sm:p-5 space-y-3 hover:bg-slate-50/50 transition">
+                      {/* Top row: Objective, Status badge, Strategy status badge */}
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <div className="space-y-0.5 min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">{goal.objective}</h4>
+                            
+                            {/* Strategy status pill */}
+                            {stratStatus === 'approved' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                                <Check size={11} /> Strategy Agreed
+                              </span>
+                            )}
+                            {stratStatus === 'submitted' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1 animate-pulse">
+                                <Clock size={11} /> Strategy Submitted
+                              </span>
+                            )}
+                            {stratStatus === 'revision_requested' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                                Revision Requested
+                              </span>
+                            )}
+                            {stratStatus === 'pending_submission' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1">
+                                Strategy Pending
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Assignee & Manager Info */}
+                          <div className="flex items-center gap-2 text-xs text-slate-500 pt-0.5 flex-wrap">
+                            <span>Assignee: <strong className="text-slate-800 font-semibold">{goal.employee_name}</strong></span>
+                            <span>•</span>
+                            <span>Manager: <strong className="text-slate-700 font-medium">{goal.manager_name}</strong></span>
+                            <span>•</span>
+                            <span>Due: <strong>{formatStaticDate(goal.deadline)}</strong></span>
+                          </div>
+                        </div>
+
+                        <GoalStatusBadge status={goal.status} />
+                      </div>
+
+                      {/* Expected Standard */}
+                      <div className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3 leading-relaxed">
+                        <strong className="text-slate-700">Expected Standard:</strong> {goal.expected_result}
+                      </div>
+
+                      {/* TWO-WAY STRATEGY SECTION (SUPER ADMIN ACTION & VISIBILITY) */}
+                      {stratStatus === 'submitted' && (
+                        <div className="p-3.5 bg-blue-50/90 border border-blue-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                          <div className="space-y-0.5 min-w-0 flex-1">
+                            <span className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                              <Lightbulb size={13} className="text-blue-600 shrink-0" />
+                              Strategy Plan Proposed by {goal.employee_name}
+                            </span>
+                            <p className="text-xs text-blue-900 line-clamp-2 italic bg-white/80 p-2 rounded-lg border border-blue-100 mt-1">
+                              &ldquo;{goal.strategy_text}&rdquo;
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setReviewingGoal(goal)
+                              setRevisionFeedback(goal.strategy_feedback || '')
+                              setStrategyReviewError(null)
+                              setStrategyReviewModalOpen(true)
+                            }}
+                            className="bg-[#1D68FE] hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shrink-0 cursor-pointer shadow-xs border-0 self-end sm:self-auto"
+                          >
+                            Review &amp; Sign-Off
+                          </Button>
+                        </div>
+                      )}
+
+                      {stratStatus === 'approved' && goal.strategy_text && (
+                        <div className="bg-slate-50 border border-slate-200/70 rounded-xl overflow-hidden text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedStrategies(prev => ({ ...prev, [goal.id]: !prev[goal.id] }))}
+                            className="w-full p-2.5 px-3 flex items-center justify-between text-slate-700 hover:bg-slate-100/60 font-semibold cursor-pointer transition"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <CheckCircle2 size={13} className="text-emerald-600" />
+                              <span>Agreed 60-Second Strategy Plan</span>
+                            </div>
+                            {expandedStrategies[goal.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                          {expandedStrategies[goal.id] && (
+                            <div className="p-3 px-3.5 pt-1 text-slate-600 leading-relaxed border-t border-slate-200/50 bg-white">
+                              {goal.strategy_text}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {stratStatus === 'revision_requested' && (
+                        <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs space-y-1">
+                          <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                            <Clock size={13} className="text-amber-600" />
+                            Revision Guidance Sent to {goal.employee_name}:
+                          </span>
+                          <p className="text-amber-950 italic bg-white/80 p-2 rounded-lg border border-amber-100">
+                            &ldquo;{goal.strategy_feedback}&rdquo;
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Progress bar */}
+                      <div className="flex items-center gap-3 text-xs font-semibold text-slate-400 pt-1">
+                        <span className="text-xs font-bold text-slate-700 shrink-0 w-8">{goal.progress}%</span>
+                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-300 ${
+                              goal.status === 'completed' 
+                                ? 'bg-emerald-500' 
+                                : goal.status === 'behind' 
+                                ? 'bg-rose-500' 
+                                : 'bg-gradient-to-r from-slate-800 to-indigo-700'
+                            }`}
+                            style={{ width: `${goal.progress}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
+                  )
+                })
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Needs Review (Directives & Lags) */}
+        <div className="space-y-6">
+          <Card className="border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
+            <CardHeader className="p-4 sm:p-5 border-slate-100 pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+                  Needs Review
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-400">
+                  Action items and open directives requiring attention.
+                </CardDescription>
+              </div>
+              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                {behindGoals.length + openDirectivesCount} items
+              </span>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              {behindGoals.length === 0 && openDirectivesCount === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-400 space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                    <CheckCircle2 size={20} />
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                      goal.status === 'completed' 
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                        : goal.status === 'behind'
-                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                        : 'bg-[#0066FF] text-white'
-                    }`}>
-                      {goal.status === 'completed' ? 'Completed' : goal.status === 'behind' ? 'Behind' : 'In Progress'}
+                  <p className="font-bold text-slate-700">All Operations Healthy</p>
+                  <p className="text-slate-400">No overdue goals or active lag directives across company.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Behind Goals alert summary */}
+                  {behindGoals.length > 0 && (
+                    <div className="p-3.5 bg-rose-50 border border-rose-200/80 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+                          <AlertCircle size={14} className="text-rose-600" />
+                          {behindGoals.length} Overdue {behindGoals.length === 1 ? 'Target' : 'Targets'}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setGoalFilter('behind')
+                            const el = document.getElementById('company-goals-oversight')
+                            if (el) el.scrollIntoView({ behavior: 'smooth' })
+                          }}
+                          className="text-[11px] font-bold text-rose-700 hover:text-rose-900 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-xs cursor-pointer"
+                        >
+                          View Behind
+                        </Button>
+                      </div>
+                      <p className="text-[11px] text-rose-800 leading-snug">
+                        Goals past deadline without 100% completion. Issue directives to corresponding managers.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Active Lag Directives */}
+                  <div className="space-y-2.5 pt-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Active Lag Directives ({openLagFlags.length})
                     </span>
-                    <ChevronRight size={14} className="text-slate-300" />
+                    {openLagFlags.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">No open directives currently.</p>
+                    ) : (
+                      openLagFlags.slice(0, 4).map(flag => (
+                        <div key={flag.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900">To: {flag.manager_name}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 uppercase">
+                              {flag.status}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 italic leading-snug">&ldquo;{flag.directive}&rdquo;</p>
+                          <div className="flex justify-end pt-1">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleUpdateFlagStatus(flag.id, 'resolved')}
+                              disabled={actionInProgress === flag.id}
+                              className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg cursor-pointer"
+                            >
+                              Mark Resolved
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Right: Needs Review (Directives & Lags) */}
-        <Card className="border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-white rounded-2xl">
-          <CardHeader className="p-4 sm:p-5 border-slate-100 pb-3 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
-                Needs Review
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-400">
-                Action items and open directives requiring attention.
-              </CardDescription>
-            </div>
-            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-              {behindGoals.length + openDirectivesCount} items
-            </span>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            {behindGoals.length === 0 && openDirectivesCount === 0 ? (
-              <div className="py-12 text-center space-y-2.5">
-                <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-500 mx-auto shadow-xs">
-                  <Check size={22} strokeWidth={2.5} />
-                </div>
-                <p className="text-slate-400 text-sm font-medium">Nothing to review — all clear!</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-80 overflow-y-auto">
-                {behindGoals.slice(0, 3).map((goal) => (
-                  <div key={goal.id} className="p-3.5 rounded-xl border border-rose-100 bg-rose-50/20 flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-900 truncate">{goal.objective}</p>
-                      <p className="text-[11px] text-slate-400">{goal.employee_name} • Overdue</p>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => openQuickFlagModal(goal.manager_id, goal.employee_id, goal.id, `Operational Lag: Goal "${goal.objective}" is overdue.`)}
-                      className="text-[10px] font-bold bg-[#EA2B42] hover:bg-[#D91B3A] text-white h-7 px-2.5 rounded-lg border-0 cursor-pointer"
-                    >
-                      <Flag size={11} className="mr-1" />
-                      Flag
-                    </Button>
-                  </div>
-                ))}
-
-                {lagFlags.filter(f => f.status === 'open').map((flag) => (
-                  <div key={flag.id} className="p-3.5 rounded-xl border border-amber-100 bg-amber-50/20 flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-900 truncate">Directive to {flag.manager_name}</p>
-                      <p className="text-[11px] text-amber-700 italic truncate">&ldquo;{flag.directive}&rdquo;</p>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
-                        <ClientFeedbackTime isoString={flag.created_at} />
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateFlagStatus(flag.id, 'resolved')}
-                      disabled={actionInProgress === flag.id}
-                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 px-2 py-1 bg-emerald-50 rounded-lg border border-emerald-200 cursor-pointer shrink-0"
-                    >
-                      Resolve
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* ============================================================ */}
@@ -1026,6 +1351,131 @@ interface ManagingDirectorDashboardProps {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 3: SUPER ADMIN TWO-WAY STRATEGY REVIEW & SIGN-OFF */}
+      {/* ============================================================ */}
+      {strategyReviewModalOpen && reviewingGoal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-[#0B111E] text-white p-4 sm:p-5 flex items-center justify-between shrink-0 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#1D68FE] flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
+                  <Lightbulb size={16} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base text-white">Review 60-Second Strategy (Super Admin)</h3>
+                  <p className="text-[11px] text-slate-400 font-normal">Company-Wide Oversight • One-Minute Manager Alignment</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setStrategyReviewModalOpen(false)} 
+                className="text-slate-400 hover:text-white transition cursor-pointer p-1.5 rounded-lg hover:bg-white/10"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+              {strategyReviewError && (
+                <div className="bg-rose-50 text-rose-700 p-3 rounded-xl text-xs font-bold border border-rose-200 flex items-center justify-between">
+                  <span>{strategyReviewError}</span>
+                  <button type="button" onClick={() => setStrategyReviewError(null)} className="text-rose-400 hover:text-rose-700">
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* Goal Overview */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Goal Objective</span>
+                    <p className="font-bold text-slate-900 mt-0.5">{reviewingGoal.objective}</p>
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded-md border border-slate-200 shrink-0">
+                    Assignee: {reviewingGoal.employee_name}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Expected Standard</span>
+                  <p className="text-slate-600 mt-0.5">{reviewingGoal.expected_result}</p>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium pt-1 border-t border-slate-200/60">
+                  <span>Supervising Manager: <strong>{reviewingGoal.manager_name}</strong></span>
+                  <span>Deadline: <strong>{formatStaticDate(reviewingGoal.deadline)}</strong></span>
+                </div>
+              </div>
+
+              {/* Submitted Strategy Content */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Proposed Execution Strategy:
+                  </span>
+                  <span className="text-[11px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                    {(reviewingGoal.strategy_text || '').split(/\s+/).filter(Boolean).length} words
+                  </span>
+                </div>
+                <div className="p-3.5 bg-blue-50/50 border border-blue-200/80 rounded-xl text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+                  {reviewingGoal.strategy_text || 'No strategy text submitted.'}
+                </div>
+              </div>
+
+              {/* Revision Feedback Section */}
+              <div className="space-y-1.5 pt-1">
+                <label htmlFor="revFeedback" className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  Revision Guidance / Feedback (if requesting changes)
+                </label>
+                <textarea
+                  id="revFeedback"
+                  rows={3}
+                  value={revisionFeedback}
+                  onChange={(e) => setRevisionFeedback(e.target.value)}
+                  placeholder="Provide constructive feedback explaining adjustments needed before approval..."
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer with Actions */}
+            <div className="p-4 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between shrink-0 gap-2.5">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setStrategyReviewModalOpen(false)}
+                disabled={submittingStrategyReview}
+                className="cursor-pointer text-slate-600 hover:text-slate-900 text-xs sm:text-sm font-semibold w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button 
+                  type="button" 
+                  onClick={() => handleReviewStrategy('request_revision')}
+                  disabled={submittingStrategyReview}
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-xs border-0 cursor-pointer flex-1 sm:flex-none"
+                >
+                  Request Revision
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={() => handleReviewStrategy('approve')}
+                  disabled={submittingStrategyReview}
+                  loading={submittingStrategyReview}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-5 py-2 rounded-xl shadow-lg shadow-emerald-600/25 border-0 cursor-pointer flex-1 sm:flex-none"
+                >
+                  Approve &amp; Sign-Off
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
